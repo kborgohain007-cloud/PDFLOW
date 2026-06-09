@@ -5,6 +5,7 @@ import ThemeProvider from "@/components/theme/ThemeProvider";
 import AnimatedBackground from "@/components/background/AnimatedBackground";
 import Navbar from "@/components/ui/Navbar";
 import ToastContainer from "@/components/ui/ToastContainer";
+import Script from "next/script";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -48,6 +49,19 @@ export default function RootLayout({
           <ToastContainer />
         </ThemeProvider>
       </body>
+      <Script
+        src="https://www.googletagmanager.com/gtag/js?id=G-P426MGQNH3"
+        strategy="afterInteractive"
+      />
+      <Script id="google-analytics" strategy="afterInteractive">
+        {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+          gtag('config', 'G-P426MGQNH3');
+        `}
+      </Script>
     </html>
   );
 }
