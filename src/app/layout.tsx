@@ -18,13 +18,23 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PDFLOW — Fast AI-Powered PDF & Document Tools",
-  description: "Merge, convert, compress, perform OCR, split, and edit PDFs in seconds. Highly secure, 100% private, client-side document processing ecosystem.",
-  keywords: ["pdf tools", "pdf to word", "pdf compressor", "pdf ocr", "client side pdf processing", "pdflow"],
+  title: "Free PDF Tools Online – Merge, Compress, Convert PDF | PDFlow",
+  description: "Free online PDF tools. Merge PDF, compress PDF, convert PDF to Word, Excel, JPG and more. 100% browser-based, private and completely free.",
+  keywords: ["pdf tools", "free pdf tools", "pdf to word", "pdf compressor", "pdf ocr", "private pdf tools", "client side pdf processing", "pdflow"],
+  alternates: {
+    canonical: "https://pdflow.in",
+  },
   openGraph: {
-    title: "PDFLOW — Fast AI-Powered PDF & Document Tools",
-    description: "Highly secure, 100% private, client-side document processing ecosystem.",
+    title: "Free PDF Tools Online – Merge, Compress, Convert PDF | PDFlow",
+    description: "Free online PDF tools. Merge PDF, compress PDF, convert PDF to Word, Excel, JPG and more. 100% browser-based, private and completely free.",
+    url: "https://pdflow.in",
+    siteName: "PDFlow",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free PDF Tools Online – Merge, Compress, Convert PDF | PDFlow",
+    description: "Free online PDF tools. Merge PDF, compress PDF, convert PDF to Word, Excel, JPG and more. 100% browser-based, private and completely free.",
   }
 };
 
@@ -40,6 +50,25 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "PDFlow",
+            "url": "https://pdflow.in"
+          }) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            "name": "PDFlow",
+            "url": "https://pdflow.in",
+            "logo": "https://pdflow.in/icon.png"
+          }) }}
+        />
         <ThemeProvider>
           <AnimatedBackground />
           <Navbar />

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePDFlowStore } from '@/store/use-pdflow-store';
+import { seoContentMap } from '@/data/seo-content';
 import UploadZone from '@/components/upload/UploadZone';
 import ContinueWorkflowBar from '@/components/workflow/ContinueWorkflowBar';
 import { ArrowLeft, Sparkles, HelpCircle, FileCheck, Shield, Award } from 'lucide-react';
@@ -44,7 +45,54 @@ export default function ToolPageShell({
   processFiles,
   infoSections = [],
 }: ToolPageShellProps) {
-  const { activeWorkflowFile, setActiveWorkflowFile, addHistoryItem } = usePDFlowStore();
+  const { activeWorkflowFile, setActiveWorkflowFile, addHistoryItem, exportBrandingEnabled, setExportBrandingEnabled } = usePDFlowStore();
+  const seoData = seoContentMap[toolId];
+
+  // Dynamic JSON-LD structured data schemas
+  const softwareSchema = seoData ? {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": seoData.h1,
+    "operatingSystem": "All",
+    "applicationCategory": "UtilityApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": "0.00",
+      "priceCurrency": "USD"
+    }
+  } : null;
+
+  const faqSchema = seoData && seoData.faqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": seoData.faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a
+      }
+    }))
+  } : null;
+
+  const breadcrumbSchema = seoData ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://pdflow.in"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": seoData.h1,
+        "item": `https://pdflow.in/${toolId}`
+      }
+    ]
+  } : null;
   const [files, setFiles] = useState<File[]>([]);
   
   // Processing States
@@ -276,6 +324,20 @@ export default function ToolPageShell({
                       </div>
                     )}
 
+                    {/* Subtle branding toggle option */}
+                    <div className="flex items-center gap-2.5 px-1 py-1 text-xs text-neutral-500 dark:text-neutral-400 font-semibold select-none">
+                      <input
+                        type="checkbox"
+                        id="branding-toggle"
+                        checked={exportBrandingEnabled}
+                        onChange={(e) => setExportBrandingEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 text-indigo-650 focus:ring-indigo-500/20 cursor-pointer accent-indigo-600 shrink-0"
+                      />
+                      <label htmlFor="branding-toggle" className="cursor-pointer hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors">
+                        Add a small &ldquo;Processed with PDFlow&rdquo; footer to generated files (helps keep PDFlow 100% free)
+                      </label>
+                    </div>
+
                     <button
                       onClick={() => handleProcess()}
                       className="w-full py-4.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-heading font-extrabold text-sm shadow-md shadow-indigo-600/15 hover:shadow-indigo-650/25 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 mt-1"
@@ -335,6 +397,99 @@ export default function ToolPageShell({
           ))}
         </div>
       </div>
+
+      {/* Dynamic JSON-LD SEO Schemas */}
+      {softwareSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
+        />
+      )}
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        />
+      )}
+      {breadcrumbSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        />
+      )}
+
+      {/* Detailed SEO Content Article */}
+      {seoData && (
+        <article className="max-w-4xl mx-auto mt-20 border-t border-neutral-200/50 dark:border-neutral-800/40 pt-12 flex flex-col gap-10 text-neutral-600 dark:text-neutral-300">
+          <div className="flex flex-col gap-3">
+            <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-neutral-900 dark:text-neutral-50">
+              {seoData.h1}
+            </h2>
+            <p className="text-sm font-semibold leading-relaxed text-neutral-500 dark:text-neutral-450">
+              {seoData.intro}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {seoData.benefits.map((b, idx) => (
+              <div key={idx} className="matte-surface bg-white/40 dark:bg-neutral-900/20 p-5 rounded-2xl border border-neutral-200/40 dark:border-neutral-800/50">
+                <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200 mb-2">
+                  {b.title}
+                </h3>
+                <p className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 leading-relaxed">
+                  {b.description}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div 
+            className="prose prose-neutral dark:prose-invert max-w-none text-sm leading-relaxed flex flex-col gap-4.5"
+            dangerouslySetInnerHTML={{ __html: seoData.guideHtml }}
+          />
+
+          {seoData.faqs.length > 0 && (
+            <div className="flex flex-col gap-6">
+              <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-neutral-900 dark:text-neutral-50 border-b border-neutral-100 dark:border-neutral-900 pb-3">
+                Frequently Asked Questions
+              </h2>
+              <div className="flex flex-col gap-3">
+                {seoData.faqs.map((faq, idx) => (
+                  <div key={idx} className="matte-surface bg-white/30 dark:bg-neutral-900/10 border border-neutral-200/40 dark:border-neutral-800/50 p-5 rounded-2xl flex flex-col gap-2">
+                    <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200">
+                      {faq.q}
+                    </h3>
+                    <p className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 leading-relaxed">
+                      {faq.a}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-neutral-100 dark:border-neutral-900 pt-8 flex flex-col gap-3.5">
+            <h4 className="text-xs font-bold text-neutral-450 dark:text-neutral-500 uppercase tracking-widest">
+              Related PDF Utilities
+            </h4>
+            <div className="flex items-center gap-3 flex-wrap">
+              {seoData.relatedTools.map((slug) => {
+                const targetTool = seoContentMap[slug];
+                if (!targetTool) return null;
+                return (
+                  <Link
+                    key={slug}
+                    href={`/${slug}`}
+                    className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white/40 dark:bg-neutral-900/30 hover:border-indigo-500/50 dark:hover:border-indigo-400/40 hover:text-indigo-600 dark:hover:text-indigo-400 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    {targetTool.metaTitle.split(' — ')[0].split(' | ')[0]}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </article>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePDFlowStore } from '@/store/use-pdflow-store';
-import { Download, Undo2, ArrowRight, Edit3, Check, FileCheck, Layers } from 'lucide-react';
+import { Download, Undo2, ArrowRight, Edit3, Check, FileCheck, Layers, Share2, Link2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/hooks/use-toast';
 
@@ -30,10 +30,17 @@ export default function ContinueWorkflowBar({
   const setActiveWorkflowFile = usePDFlowStore((state) => state.setActiveWorkflowFile);
   const [isEditingName, setIsEditingName] = useState(false);
   const [tempName, setTempName] = useState(fileName);
+  const [shareUrl, setShareUrl] = useState('');
 
   useEffect(() => {
     setTempName(fileName);
   }, [fileName]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setShareUrl(window.location.origin + window.location.pathname);
+    }
+  }, []);
 
   const handleSaveRename = () => {
     if (!tempName.trim()) {
@@ -188,6 +195,52 @@ export default function ContinueWorkflowBar({
             <Undo2 className="w-4.5 h-4.5" />
             Undo
           </button>
+        </div>
+
+        {/* Share Growth Loop Block */}
+        <div className="flex flex-col gap-3.5 p-4.5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-500/10">
+          <div className="flex items-center gap-2">
+            <Share2 className="w-4 h-4 text-indigo-500" />
+            <h5 className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+              Your PDF is ready! Share PDFlow to keep it free
+            </h5>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(shareUrl);
+                toast({ title: 'Link copied', description: 'URL saved to clipboard.', type: 'success' });
+              }}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
+            >
+              <Link2 className="w-3.5 h-3.5" />
+              Copy Link
+            </button>
+            <a
+              href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Check out this 100% private, free online PDF tool! No uploads, processes entirely in your browser: `)}&url=${encodeURIComponent(shareUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
+            >
+              Share on X
+            </a>
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
+            >
+              Share on LinkedIn
+            </a>
+            <a
+              href={`https://api.whatsapp.com/send?text=${encodeURIComponent(`Check out this free private PDF tool: `)}${encodeURIComponent(shareUrl)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/80 transition-colors cursor-pointer"
+            >
+              Share on WhatsApp
+            </a>
+          </div>
         </div>
 
         {/* Chaining / Continue Workflow Section */}

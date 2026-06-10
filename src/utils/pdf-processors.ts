@@ -1,6 +1,27 @@
-// Client-Side PDF Operations and Formats Compiler
-
 import { toast } from '@/hooks/use-toast';
+import { usePDFlowStore } from '@/store/use-pdflow-store';
+
+async function applyPDFBranding(pdfDoc: any) {
+  const exportBrandingEnabled = usePDFlowStore.getState().exportBrandingEnabled;
+  if (!exportBrandingEnabled) return;
+  try {
+    const { StandardFonts, rgb } = await import('pdf-lib');
+    const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const pages = pdfDoc.getPages();
+    for (const page of pages) {
+      const { width, height } = page.getSize();
+      page.drawText('Processed with PDFlow (pdflow.in)', {
+        x: width - 150,
+        y: 12,
+        size: 7,
+        font: helveticaFont,
+        color: rgb(0.65, 0.65, 0.65),
+      });
+    }
+  } catch (err) {
+    console.error('Error applying PDF branding:', err);
+  }
+}
 
 // 1. PDF to Image Processor
 export async function processPdfToImage(
@@ -132,6 +153,7 @@ export async function processImageToPdf(
     });
   }
 
+  await applyPDFBranding(pdfDoc);
   onProgress(95, 'Writing PDF structure...');
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
@@ -163,6 +185,7 @@ export async function processCompressPdf(
     pdfDoc.setCreator('');
     pdfDoc.setProducer('');
 
+    await applyPDFBranding(pdfDoc);
     onProgress(70, 'Reducing stream overhead...');
     const compressedBytes = await pdfDoc.save({ useObjectStreams: true });
     const blob = new Blob([compressedBytes as any], { type: 'application/pdf' });
@@ -218,6 +241,7 @@ export async function processCompressPdf(
     });
   }
 
+  await applyPDFBranding(pdfDoc);
   onProgress(95, 'Writing compressed file bytes...');
   const compressedBytes = await pdfDoc.save();
   const blob = new Blob([compressedBytes as any], { type: 'application/pdf' });
@@ -348,6 +372,7 @@ export async function processTxtToPdf(
     y -= fontSize * 1.5;
   });
 
+  await applyPDFBranding(pdfDoc);
   const pdfBytes = await pdfDoc.save();
   const blob = new Blob([pdfBytes as any], { type: 'application/pdf' });
   const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;

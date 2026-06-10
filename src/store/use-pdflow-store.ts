@@ -27,6 +27,8 @@ interface PDFlowState {
   clearUndoStack: () => void;
   activeWorkflowFile: { file: File; sourceTool: string } | null;
   setActiveWorkflowFile: (workflow: { file: File; sourceTool: string } | null) => void;
+  exportBrandingEnabled: boolean;
+  setExportBrandingEnabled: (enabled: boolean) => void;
 }
 
 export const usePDFlowStore = create<PDFlowState>()(
@@ -68,11 +70,14 @@ export const usePDFlowStore = create<PDFlowState>()(
       clearUndoStack: () => set({ undoStack: [] }),
       activeWorkflowFile: null,
       setActiveWorkflowFile: (activeWorkflowFile) => set({ activeWorkflowFile }),
+      exportBrandingEnabled: true,
+      setExportBrandingEnabled: (exportBrandingEnabled) => set({ exportBrandingEnabled }),
     }),
     {
       name: 'pdflow-storage',
       partialize: (state) => ({
         theme: state.theme,
+        exportBrandingEnabled: state.exportBrandingEnabled,
         history: state.history.map((item) => ({
           id: item.id,
           toolName: item.toolName,

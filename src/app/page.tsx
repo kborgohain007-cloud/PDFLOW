@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { usePDFlowStore } from '@/store/use-pdflow-store';
 import { toolsData, ToolItem } from '@/data/tools';
 import UploadZone from '@/components/upload/UploadZone';
@@ -187,17 +188,17 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="font-heading font-extrabold text-4xl sm:text-5xl lg:text-6xl tracking-tight leading-tight text-neutral-900 dark:text-neutral-50"
           >
-            Fast AI-powered <br />
-            <span className="text-gradient">PDF Workflows</span>
+            Private PDF Tools — <br />
+            <span className="text-gradient">Files Never Leave Your Device</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-neutral-500 dark:text-neutral-400 mt-6 text-base sm:text-lg font-medium leading-relaxed"
+            className="text-neutral-550 dark:text-neutral-400 mt-6 text-base sm:text-lg font-medium leading-relaxed"
           >
-            Merge, convert, compress, and run OCR on your documents. Zero-latency processing that runs entirely inside your browser. No files uploaded to servers, ever.
+            Merge, Compress, Convert, Split, OCR and Edit PDFs completely in your browser. No uploads. No waiting. No accounts. Completely free.
           </motion.p>
 
           <motion.div
@@ -210,14 +211,32 @@ export default function Home() {
               href="#tools"
               className="px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all shadow-md shadow-indigo-600/10 hover:shadow-indigo-600/20 active:scale-[0.98] cursor-pointer"
             >
-              Start Converting
+              Start Using Free Tools
             </a>
             <a
-              href="#comparison"
-              className="px-5 py-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/60 text-neutral-600 dark:text-neutral-300 font-semibold text-sm transition-all cursor-pointer"
+              href="#tools"
+              className="px-5 py-3.5 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-900/60 text-neutral-600 dark:text-neutral-350 font-semibold text-sm transition-all cursor-pointer"
             >
-              Explore Features
+              See All Tools
             </a>
+          </motion.div>
+
+          {/* Trust Badges directly under CTAs */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-8 flex flex-wrap gap-x-4 gap-y-2 text-xs font-bold text-neutral-500 dark:text-neutral-450"
+          >
+            <span className="flex items-center gap-1 text-indigo-600 dark:text-indigo-400">✓ 100% Free</span>
+            <span>•</span>
+            <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-450">✓ No Uploads Required</span>
+            <span>•</span>
+            <span className="flex items-center gap-1">✓ Browser-Based Processing</span>
+            <span>•</span>
+            <span className="flex items-center gap-1">✓ Privacy First</span>
+            <span>•</span>
+            <span className="flex items-center gap-1">✓ No Sign-Up Needed</span>
           </motion.div>
         </div>
 
@@ -293,6 +312,41 @@ export default function Home() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* PRIVACY-FIRST DIFFERENTIATORS */}
+      <section className="flex flex-col gap-8">
+        <div className="text-center max-w-lg mx-auto">
+          <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-neutral-950 dark:text-neutral-50">
+            Why PDFlow Is Different
+          </h2>
+          <p className="text-sm font-semibold text-neutral-400 dark:text-neutral-500 mt-1">
+            Running client-side utility algorithms directly in your browser sandbox.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {[
+            { title: '🔒 Files Never Leave Your Device', description: 'Computations run entirely inside your browser tab using WebAssembly. Your files are never uploaded to any remote server.' },
+            { title: '⚡ Instant Local Processing', description: 'Bypass cloud queue delays and internet upload speeds. Files are converted and compressed on your device CPU instantly.' },
+            { title: '💻 Runs Entirely In Your Browser', description: 'Zero downloads, zero browser extensions. Fully compatible with Windows, Mac, iOS, Android, and Linux.' },
+            { title: '🆓 Completely Free', description: 'No paywalls, no daily operation counts, and no watermarks. PDFlow is fully supported by community sharing.' },
+            { title: '🚫 No Sign-Up Required', description: 'Start using tools immediately. We do not collect emails, demand registration details, or track your identity.' },
+            { title: '🌎 Works Everywhere', description: 'Take advantage of standard sandboxed local filesystems to optimize your files securely from any device.' }
+          ].map((card, idx) => (
+            <div
+              key={idx}
+              className="matte-surface bg-white/40 dark:bg-neutral-900/10 p-6 rounded-2xl border border-neutral-200/40 dark:border-neutral-850/30 hover:border-indigo-500/30 dark:hover:border-indigo-400/20 hover:shadow-md transition-all flex flex-col gap-2"
+            >
+              <h3 className="font-heading font-extrabold text-base text-neutral-800 dark:text-neutral-200">
+                {card.title}
+              </h3>
+              <p className="text-xs font-semibold text-neutral-450 dark:text-neutral-500 leading-relaxed">
+                {card.description}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* 3. TOOL GRID SECTION */}
       <section id="tools" className="scroll-mt-24 flex flex-col gap-8">
@@ -469,51 +523,34 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. TESTIMONIALS */}
+      {/* 6. REAL TRUST METRICS */}
       <section className="flex flex-col gap-6">
         <div className="text-center max-w-md mx-auto mb-4">
           <h2 className="font-heading font-extrabold text-2xl sm:text-3xl text-neutral-900 dark:text-neutral-50">
-            Endorsed by Teams
+            Trust PDFlow With Your Workflows
           </h2>
           <p className="text-sm font-semibold text-neutral-400 dark:text-neutral-500 mt-1">
-            Here is what our early users think of the PDFLOW ecosystem.
+            Real metrics backing up our privacy-first browser utility network.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            {
-              name: "Marcus Vance",
-              role: "Legal Architect at Vercel",
-              content: "Chaining PDF utilities together local-first is a game changer. Converting a scan, compressing it, and OCR'ing it takes under 10 seconds. Highly recommend."
-            },
-            {
-              name: "Elena Rostova",
-              role: "Design Lead at Framer",
-              content: "The transitions and file morphing queue feels so fluid. PDFLOW UX feels exactly like Linear or Raycast. It makes simple file chores delightful."
-            },
-            {
-              name: "Sarah Jenkins",
-              role: "Security Director",
-              content: "In legal tech, we cannot upload documents to third-party servers due to compliance. PDFLOW's client-side sandboxed execution solves this completely."
-            }
-          ].map((t, idx) => (
+            { metric: '100% Free', label: 'No Limits or Premium Plans' },
+            { metric: '0 Files', label: 'Uploaded to Server Databases' },
+            { metric: 'Local-First', label: 'Runs in Local Browser Sandbox' },
+            { metric: 'Instant', label: 'Bypass Cloud Queue Latency' }
+          ].map((stat, idx) => (
             <div
               key={idx}
-              className="matte-surface bg-white/60 dark:bg-neutral-900/40 p-6 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/60"
+              className="matte-surface bg-white/60 dark:bg-neutral-900/40 p-6 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/60 text-center flex flex-col gap-1.5"
             >
-              <p className="text-sm font-medium text-neutral-600 dark:text-neutral-300 italic leading-relaxed">
-                &ldquo;{t.content}&rdquo;
-              </p>
-              <div className="mt-6 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 text-xs">
-                  {t.name.split(' ').map(n => n[0]).join('')}
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-neutral-900 dark:text-neutral-100">{t.name}</h4>
-                  <p className="text-[10px] font-semibold text-neutral-400 mt-0.5">{t.role}</p>
-                </div>
-              </div>
+              <span className="text-3xl font-heading font-black text-indigo-600 dark:text-indigo-400">
+                {stat.metric}
+              </span>
+              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-450">
+                {stat.label}
+              </span>
             </div>
           ))}
         </div>
@@ -569,15 +606,61 @@ export default function Home() {
       </section>
 
       {/* 8. FOOTER */}
-      <footer className="border-t border-neutral-200/40 dark:border-neutral-800/40 pt-10 pb-6 text-center flex flex-col items-center justify-between gap-6 md:flex-row text-xs text-neutral-400 dark:text-neutral-500 font-semibold mt-10">
-        <div className="flex items-center gap-1.5">
-          <Logo className="w-6 h-6" />
-          <span>&copy; {new Date().getFullYear()} PDFLOW. All rights reserved.</span>
+      <footer className="border-t border-neutral-200/40 dark:border-neutral-800/40 pt-16 pb-8 flex flex-col gap-10 mt-16 text-xs text-neutral-450 dark:text-neutral-500 font-semibold">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-left">
+          {/* Logo & Privacy Differentiator */}
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-1.5">
+              <Logo className="w-6 h-6" />
+              <span className="font-heading font-extrabold text-base tracking-tight text-neutral-900 dark:text-neutral-50">
+                PDFLOW
+              </span>
+            </div>
+            <p className="text-xs font-semibold leading-relaxed text-neutral-500 dark:text-neutral-500">
+              100% browser-based private document utilities. Your files never leave your device. Fully free, no registrations required.
+            </p>
+          </div>
+
+          {/* Popular Tools Column 1 */}
+          <div className="flex flex-col gap-2.5">
+            <h5 className="font-heading font-extrabold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest text-[10px]">
+              PDF Conversion
+            </h5>
+            <Link href="/pdf-to-word" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PDF to Word</Link>
+            <Link href="/word-to-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Word to PDF</Link>
+            <Link href="/pdf-to-image" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PDF to Image</Link>
+            <Link href="/image-to-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Image to PDF</Link>
+          </div>
+
+          {/* Popular Tools Column 2 */}
+          <div className="flex flex-col gap-2.5">
+            <h5 className="font-heading font-extrabold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest text-[10px]">
+              Optimization & AI
+            </h5>
+            <Link href="/compress-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Compress PDF</Link>
+            <Link href="/ocr-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">OCR Scans (AI)</Link>
+            <Link href="/pdf-to-excel" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">PDF to Excel</Link>
+            <Link href="/excel-to-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Excel to PDF</Link>
+          </div>
+
+          {/* Site Pages */}
+          <div className="flex flex-col gap-2.5">
+            <h5 className="font-heading font-extrabold text-neutral-800 dark:text-neutral-200 uppercase tracking-widest text-[10px]">
+              Platform
+            </h5>
+            <a href="#tools" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">All Utilities</a>
+            <Link href="/recent" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Session Log (History)</Link>
+            <a href="#comparison" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Comparison Guide</a>
+          </div>
         </div>
-        <div className="flex items-center gap-5">
-          <a href="#tools" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Tools</a>
-          <a href="#comparison" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Comparison</a>
-          <a href="/recent" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Session Log</a>
+
+        <div className="border-t border-neutral-100 dark:border-neutral-900 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left text-[11px] text-neutral-450 dark:text-neutral-550">
+          <span>&copy; {new Date().getFullYear()} PDFLOW. All rights reserved. Locally synthesized first.</span>
+          <div className="flex items-center gap-5">
+            <Link href="/compress-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Free PDF Compressor</Link>
+            <Link href="/pdf-to-word" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Free PDF Converter</Link>
+            <Link href="/ocr-pdf" className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Free OCR Tool</Link>
+          </div>
         </div>
       </footer>
     </div>
