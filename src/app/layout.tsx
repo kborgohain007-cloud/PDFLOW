@@ -6,6 +6,7 @@ import AnimatedBackground from "@/components/background/AnimatedBackground";
 import Navbar from "@/components/ui/Navbar";
 import ToastContainer from "@/components/ui/ToastContainer";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -48,6 +49,7 @@ export default function RootLayout({
           </main>
           <ToastContainer />
         </ThemeProvider>
+        <Analytics />
       </body>
       <Script
         src="https://www.googletagmanager.com/gtag/js?id=G-P426MGQNH3"
