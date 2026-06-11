@@ -455,19 +455,179 @@ export async function processPdfToTxt(
   return { blob, fileName: `${baseName}_extracted.txt` };
 }
 
-// 7. PDF to Word
+// 7. PDF to Word (image-based to preserve full visual structure)
 export async function processPdfToWord(
   files: File[],
   options: any,
   onProgress: (p: number, s: string) => void
 ): Promise<{ blob: Blob; fileName: string }> {
-  const { blob, fileName } = await processPdfToTxt(files, options, onProgress);
-  const text = await blob.text();
-  
-  onProgress(90, 'Building Word document...');
-  // Generate a real .docx (Office Open XML) file
-  const outputBlob = await buildDocxFromText(text);
-  const baseName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
+  const pdfjsLib = await import('pdfjs-dist');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+  const file = files[0];
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const numPages = pdf.numPages;
+
+  onProgress(10, 'Reading PDF structure...');
+
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+
+  // Render each page as a high-quality PNG image
+  const pageImages: { data: ArrayBuffer; widthPt: number; heightPt: number }[] = [];
+
+  for (let i = 1; i <= numPages; i++) {
+    onProgress(10 + Math.round((i / numPages) * 60), `Rendering page ${i} of ${numPages}...`);
+    const page = await pdf.getPage(i);
+    const origViewport = page.getViewport({ scale: 1.0 });
+    const renderViewport = page.getViewport({ scale: 2.0 }); // 2x for crisp text
+
+    const canvas = document.createElement('canvas');
+    canvas.width = renderViewport.width;
+    canvas.height = renderViewport.height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas 2D context not available');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    await page.render({ canvasContext: ctx, viewport: renderViewport } as any).promise;
+
+    const imgBlob: Blob = await new Promise((resolve, reject) => {
+      canvas.toBlob((b) => {
+        if (b) resolve(b);
+        else reject(new Error('Canvas render error'));
+      }, 'image/png');
+    });
+
+    pageImages.push({
+      data: await imgBlob.arrayBuffer(),
+      widthPt: origViewport.width,   // PDF points (1/72 inch)
+      heightPt: origViewport.height,
+    });
+  }
+
+  onProgress(80, 'Building Word document...');
+
+  // Add page images to ZIP
+  for (let i = 0; i < pageImages.length; i++) {
+    zip.file(`word/media/page${i + 1}.png`, pageImages[i].data);
+  }
+
+  // DOCX page size from first page (points → twips: 1pt = 20twips)
+  const firstPage = pageImages[0];
+  const pageWidthTwips = Math.round(firstPage.widthPt * 20);
+  const pageHeightTwips = Math.round(firstPage.heightPt * 20);
+  const marginTwips = 288; // 0.2 inch margins
+
+  // Usable area in PDF points (margin in points = marginTwips / 20)
+  const marginPt = marginTwips / 20;
+
+  // Build document body XML with each page as a centered image
+  let bodyXml = '';
+  for (let i = 0; i < pageImages.length; i++) {
+    const img = pageImages[i];
+
+    // Usable area in EMUs (1 pt = 12700 EMU)
+    const usableWidthEmu = (img.widthPt - marginPt * 2) * 12700;
+    const usableHeightEmu = (img.heightPt - marginPt * 2) * 12700;
+
+    // Fit image within usable area while maintaining aspect ratio
+    const aspect = img.widthPt / img.heightPt;
+    let imgWidthEmu = Math.round(usableWidthEmu);
+    let imgHeightEmu = Math.round(imgWidthEmu / aspect);
+    if (imgHeightEmu > usableHeightEmu) {
+      imgHeightEmu = Math.round(usableHeightEmu);
+      imgWidthEmu = Math.round(imgHeightEmu * aspect);
+    }
+
+    bodyXml += `<w:p>
+      <w:pPr><w:spacing w:before="0" w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr>
+      <w:r><w:drawing>
+        <wp:inline distT="0" distB="0" distL="0" distR="0">
+          <wp:extent cx="${imgWidthEmu}" cy="${imgHeightEmu}"/>
+          <wp:docPr id="${i + 1}" name="Page ${i + 1}"/>
+          <a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+            <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+              <pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+                <pic:nvPicPr>
+                  <pic:cNvPr id="${i + 1}" name="page${i + 1}.png"/>
+                  <pic:cNvPicPr/>
+                </pic:nvPicPr>
+                <pic:blipFill>
+                  <a:blip r:embed="rId${i + 1}"/>
+                  <a:stretch><a:fillRect/></a:stretch>
+                </pic:blipFill>
+                <pic:spPr>
+                  <a:xfrm>
+                    <a:off x="0" y="0"/>
+                    <a:ext cx="${imgWidthEmu}" cy="${imgHeightEmu}"/>
+                  </a:xfrm>
+                  <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+                </pic:spPr>
+              </pic:pic>
+            </a:graphicData>
+          </a:graphic>
+        </wp:inline>
+      </w:drawing></w:r>
+    </w:p>`;
+
+    // Page break between pages (except after last)
+    if (i < pageImages.length - 1) {
+      bodyXml += `<w:p><w:r><w:br w:type="page"/></w:r></w:p>`;
+    }
+  }
+
+  // Build image relationships
+  let relsEntries = '';
+  for (let i = 0; i < pageImages.length; i++) {
+    relsEntries += `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/page${i + 1}.png"/>`;
+  }
+
+  // [Content_Types].xml — must include PNG extension
+  zip.file('[Content_Types].xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+
+  zip.file('_rels/.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+
+  zip.file('word/_rels/document.xml.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  ${relsEntries}
+</Relationships>`);
+
+  zip.file('word/document.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+  <w:body>
+    ${bodyXml}
+    <w:sectPr>
+      <w:pgSz w:w="${pageWidthTwips}" w:h="${pageHeightTwips}"/>
+      <w:pgMar w:top="${marginTwips}" w:right="${marginTwips}" w:bottom="${marginTwips}" w:left="${marginTwips}" w:header="0" w:footer="0" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`);
+
+  onProgress(95, 'Compressing document...');
+  const outputBlob = await zip.generateAsync({
+    type: 'blob',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  });
+
+  const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
   return { blob: outputBlob, fileName: `${baseName}_converted.docx` };
 }
 
