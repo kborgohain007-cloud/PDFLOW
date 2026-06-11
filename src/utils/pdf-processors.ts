@@ -23,6 +23,57 @@ async function applyPDFBranding(pdfDoc: any) {
   }
 }
 
+// Helper: Build a real .docx (Office Open XML) file from plain text using JSZip
+async function buildDocxFromText(text: string): Promise<Blob> {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+
+  // Escape XML special characters
+  const escapeXml = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  // Build paragraph XML from text lines
+  const paragraphs = text.split('\n').map((line) => {
+    const escaped = escapeXml(line);
+    return `<w:p><w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/><w:sz w:val="22"/></w:rPr><w:t xml:space="preserve">${escaped}</w:t></w:r></w:p>`;
+  }).join('\n');
+
+  // [Content_Types].xml
+  zip.file('[Content_Types].xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+
+  // _rels/.rels
+  zip.file('_rels/.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+
+  // word/_rels/document.xml.rels
+  zip.file('word/_rels/document.xml.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+</Relationships>`);
+
+  // word/document.xml
+  zip.file('word/document.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <w:body>
+${paragraphs}
+  </w:body>
+</w:document>`);
+
+  const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  return blob;
+}
+
 // 1. PDF to Image Processor
 export async function processPdfToImage(
   files: File[],
@@ -301,14 +352,9 @@ export async function processOcrPdf(
     const result = await processTxtToPdf([tempFile], { fontSize: 11 }, onProgress);
     return { blob: result.blob, fileName: `${baseName}_ocr.pdf` };
   } else {
-    // Generate basic HTML-based docx file (Word opens it perfectly)
-    const docxContent = `
-      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-      <head><title>OCR Output</title><style>body { font-family: Arial, sans-serif; white-space: pre-wrap; }</style></head>
-      <body>${finalLines.replace(/\n/g, '<br>')}</body>
-      </html>
-    `;
-    const blob = new Blob([docxContent], { type: 'application/msword' });
+    // Generate a real .docx (Office Open XML) file
+    onProgress(96, 'Building Word document...');
+    const blob = await buildDocxFromText(finalLines);
     return { blob, fileName: `${baseName}_ocr.docx` };
   }
 }
@@ -418,15 +464,9 @@ export async function processPdfToWord(
   const { blob, fileName } = await processPdfToTxt(files, options, onProgress);
   const text = await blob.text();
   
-  onProgress(90, 'Packing Word Doc...');
-  // Compile basic HTML docx format
-  const docxContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
-    <head><style>body { font-family: Arial, sans-serif; white-space: pre-wrap; }</style></head>
-    <body>${text.replace(/\n/g, '<br>')}</body>
-    </html>
-  `;
-  const outputBlob = new Blob([docxContent], { type: 'application/msword' });
+  onProgress(90, 'Building Word document...');
+  // Generate a real .docx (Office Open XML) file
+  const outputBlob = await buildDocxFromText(text);
   const baseName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
   return { blob: outputBlob, fileName: `${baseName}_converted.docx` };
 }
