@@ -31,6 +31,7 @@ interface ToolPageShellProps {
     onProgress: (progress: number, status: string) => void
   ) => Promise<{ blob: Blob; fileName: string }>;
   infoSections?: { title: string; content: string }[];
+  isSecureCloud?: boolean;
 }
 
 export default function ToolPageShell({
@@ -44,6 +45,7 @@ export default function ToolPageShell({
   defaultOptions = {},
   processFiles,
   infoSections = [],
+  isSecureCloud = false,
 }: ToolPageShellProps) {
   const { activeWorkflowFile, setActiveWorkflowFile, addHistoryItem, exportBrandingEnabled, setExportBrandingEnabled } = usePDFlowStore();
   const seoData = seoContentMap[toolId];
@@ -277,6 +279,18 @@ export default function ToolPageShell({
             <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400 mt-1">
               {description}
             </p>
+            {isSecureCloud && (
+              <div className="flex flex-wrap items-center gap-3 mt-4">
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20 text-xs font-bold">
+                  <Shield className="w-3.5 h-3.5" />
+                  Bank-Level Encrypted Server
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 border border-blue-200 dark:border-blue-500/20 text-xs font-bold">
+                  <FileCheck className="w-3.5 h-3.5" />
+                  Zero-Retention (Files Deleted Instantly)
+                </div>
+              </div>
+            )}
           </div>
 
           <AnimatePresence mode="wait">
