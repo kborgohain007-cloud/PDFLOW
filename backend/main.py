@@ -67,10 +67,8 @@ async def convert_pdf_to_word(background_tasks: BackgroundTasks, file: UploadFil
         command = [
             "paddleocr",
             "pp_structurev3",
-            "--image_dir", pdf_path,
-            "--recovery", "true",
-            "--use_pdf2docx", "true",
-            "--output", output_dir
+            "-i", pdf_path,
+            "--save_path", output_dir
         ]
         
         # Execute the command
