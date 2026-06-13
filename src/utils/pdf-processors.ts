@@ -471,9 +471,9 @@ export async function processPdfToWord(
   try {
     onProgress(30, 'Uploading securely & processing layout (this may take a minute)...');
     
-    // In production, this should point to your hosted FastAPI endpoint
-    // For local development, we assume FastAPI is running on port 8000
-    const response = await fetch('http://localhost:8000/api/convert/pdf-to-word', {
+    // In production, this should point to your hosted FastAPI endpoint via environment variable
+    const apiUrl = process.env.NEXT_PUBLIC_OCR_API_URL || 'http://localhost:8000';
+    const response = await fetch(`${apiUrl}/api/convert/pdf-to-word`, {
       method: 'POST',
       body: formData,
     });

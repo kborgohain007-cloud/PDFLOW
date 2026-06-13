@@ -18,7 +18,7 @@ app = FastAPI(title="PDFlow Secure Backend Services")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "https://pdflow.in", "*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
