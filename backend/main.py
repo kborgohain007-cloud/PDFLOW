@@ -63,16 +63,11 @@ async def convert_pdf_to_word(background_tasks: BackgroundTasks, file: UploadFil
         
         logger.info(f"Processing PDF to Word via PP-Structure: {file.filename}")
         
-        # Run PaddleOCR PP-Structure via CLI
-        # --image_dir: input pdf
-        # --type: structure (for layout recovery)
-        # --recovery: true (to generate DOCX)
-        # --use_pdf2docx: true
-        # --output: our secure temp output dir
+        # Run PaddleOCR 3.x PP-Structure CLI
         command = [
             "paddleocr",
+            "pp_structurev3",
             "--image_dir", pdf_path,
-            "--type", "structure",
             "--recovery", "true",
             "--use_pdf2docx", "true",
             "--output", output_dir
@@ -114,4 +109,4 @@ async def convert_pdf_to_word(background_tasks: BackgroundTasks, file: UploadFil
         # If an error occurs, clean up immediately
         cleanup_files(temp_dir)
         logger.error(f"Error during conversion: {e}")
-        raise HTTPException(status_code=500, detail="Error during PDF conversion. Please try again.")
+        raise HTTPException(status_code=500, detail=f"Error during PDF conversion: {str(e)}")
