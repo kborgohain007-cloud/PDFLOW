@@ -357,7 +357,7 @@ export default function ToolPageShell({
                       className="w-full py-4.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-heading font-extrabold text-sm shadow-md shadow-indigo-600/15 hover:shadow-indigo-650/25 active:scale-[0.99] transition-all cursor-pointer flex items-center justify-center gap-2 mt-1"
                     >
                       <Sparkles className="w-4 h-4" />
-                      {toolId === 'compress-pdf' ? 'Compress PDF' : toolId === 'ocr-pdf' ? 'Extract Text (OCR)' : toolId === 'image-to-pdf' ? 'Compile PDF' : 'Start Conversion'}
+                      {toolId === 'compress-pdf' ? 'Compress PDF' : toolId === 'ocr-pdf' ? 'Extract Text (OCR)' : toolId === 'image-to-pdf' ? 'Compile PDF' : toolId === 'merge-pdf' ? 'Merge PDFs' : 'Start Conversion'}
                     </button>
                   </motion.div>
                 )}

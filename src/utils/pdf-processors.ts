@@ -660,3 +660,50 @@ export async function processPdfToEpub(
   const baseName = files[0].name.substring(0, files[0].name.lastIndexOf('.')) || files[0].name;
   return { blob: outputBlob, fileName: `${baseName}.epub` };
 }
+
+// 17. Merge PDF
+export async function processMergePdf(
+  files: File[],
+  options: { pageOrder: { fileIndex: number; pageIndex: number }[] },
+  onProgress: (p: number, s: string) => void
+): Promise<{ blob: Blob; fileName: string }> {
+  if (!options.pageOrder || options.pageOrder.length === 0) {
+    throw new Error('No pages selected. Please select at least one page to merge.');
+  }
+
+  const { PDFDocument } = await import('pdf-lib');
+  const mergedPdf = await PDFDocument.create();
+
+  // Pre-load all uploaded files into pdf-lib instances
+  onProgress(20, 'Loading documents into memory...');
+  const loadedDocs: any[] = [];
+  for (const file of files) {
+    const arrayBuffer = await file.arrayBuffer();
+    const doc = await PDFDocument.load(arrayBuffer);
+    loadedDocs.push(doc);
+  }
+
+  // Iterate over user-defined page order and copy pages
+  const totalPages = options.pageOrder.length;
+  onProgress(40, 'Arranging pages...');
+  
+  for (let i = 0; i < totalPages; i++) {
+    const { fileIndex, pageIndex } = options.pageOrder[i];
+    const sourceDoc = loadedDocs[fileIndex];
+    
+    // Copy the single page
+    const [copiedPage] = await mergedPdf.copyPages(sourceDoc, [pageIndex]);
+    mergedPdf.addPage(copiedPage);
+    
+    if (i % 5 === 0) {
+      onProgress(40 + Math.round((i / totalPages) * 40), `Merging page ${i + 1} of ${totalPages}...`);
+    }
+  }
+
+  await applyPDFBranding(mergedPdf);
+  onProgress(90, 'Writing merged document...');
+  const mergedBytes = await mergedPdf.save();
+  const blob = new Blob([mergedBytes as any], { type: 'application/pdf' });
+  
+  return { blob, fileName: 'Merged_Document.pdf' };
+}

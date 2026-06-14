@@ -199,6 +199,18 @@ export const toolsData: ToolItem[] = [
   
   // Optimization Tools
   {
+    id: 'merge-pdf',
+    name: 'Merge PDF',
+    slug: 'merge-pdf',
+    description: 'Combine multiple PDF files into one and easily rearrange pages.',
+    category: 'optimization',
+    inputFormats: ['.pdf'],
+    outputFormats: ['.pdf'],
+    maxSizeMB: 100,
+    batchSupport: true,
+    iconName: 'layers'
+  },
+  {
     id: 'compress-pdf',
     name: 'Compress PDF',
     slug: 'compress-pdf',

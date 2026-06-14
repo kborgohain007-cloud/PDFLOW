@@ -350,6 +350,25 @@ export const seoContentMap: Record<string, SeoData> = {
     ],
     relatedTools: ['txt-to-pdf', 'pdf-to-word', 'ocr-pdf']
   },
+  'merge-pdf': {
+    toolId: 'merge-pdf',
+    metaTitle: 'Merge PDF Files Online — Combine PDFs Privately | PDFlow',
+    metaDescription: 'Combine multiple PDF documents into a single file easily. Rearrange pages using drag-and-drop. 100% private client-side processing.',
+    h1: 'Merge PDF Files Online (Free & Private)',
+    intro: 'Combine multiple PDF documents into a single cohesive file. Rearrange or delete specific pages visually using drag-and-drop, all processed 100% locally in your browser.',
+    benefits: [
+      { title: 'Visual Drag-and-Drop', description: 'Easily reorder specific pages from different documents before merging.' },
+      { title: 'Zero Cloud Uploads', description: 'Merging happens locally using WebAssembly. Safe for highly confidential files.' }
+    ],
+    guideHtml: `
+      <h2>Combine PDFs Privately</h2>
+      <p>Select multiple PDF files to upload them into our secure local processing engine. You can drag and drop the thumbnails to arrange the exact order of pages, or delete unwanted pages before clicking Merge to generate your final document.</p>
+    `,
+    faqs: [
+      { q: 'Is there a limit to how many files I can merge?', a: 'You can merge files up to a combined size of 100MB directly in your browser without any uploads.' }
+    ],
+    relatedTools: ['compress-pdf', 'pdf-to-image', 'pdf-to-word']
+  },
   'recent': {
     toolId: 'recent',
     metaTitle: 'Session History & Local File Cache | PDFlow',
