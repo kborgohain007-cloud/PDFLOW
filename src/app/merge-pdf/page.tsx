@@ -14,7 +14,7 @@ export default function MergePdfPage() {
       toolId={seo.toolId}
       title={seo.h1}
       description={seo.intro}
-      allowedTypes={['application/pdf']}
+      allowedTypes={['.pdf']}
       multiple={true}
       maxSizeMB={100}
       processFiles={processMergePdf}
