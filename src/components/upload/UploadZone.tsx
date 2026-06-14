@@ -198,7 +198,7 @@ export default function UploadZone({
               {processingStatus || 'Processing Files...'}
             </h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-400 max-w-sm mb-6">
-              Please keep this page open. We are running optimized scripts locally.
+              Please keep this page open while we process your document.
             </p>
 
             {/* Custom styled progress bar */}

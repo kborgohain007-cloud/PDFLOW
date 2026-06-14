@@ -385,15 +385,27 @@ export default function ToolPageShell({
 
         {/* Right Side: Informative panel */}
         <div className="w-full lg:w-80 flex flex-col gap-4">
-          <div className="matte-surface bg-white/40 dark:bg-neutral-900/10 p-5.5 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/60 backdrop-blur-sm">
-            <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200 mb-3 flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
-              Privacy Sandboxed
-            </h3>
-            <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              This tool converts files client-side. WebAssembly models execute computations within your browser window, securing document containment.
-            </p>
-          </div>
+          {isSecureCloud ? (
+            <div className="matte-surface bg-white/40 dark:bg-neutral-900/10 p-5.5 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/60 backdrop-blur-sm">
+              <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200 mb-3 flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-indigo-500 shrink-0" />
+                Secure Cloud Server
+              </h3>
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                This tool requires advanced ML models to reconstruct layouts. Files are transmitted via end-to-end encryption to our secure cloud server, processed instantly, and permanently deleted with a strict Zero-Retention policy.
+              </p>
+            </div>
+          ) : (
+            <div className="matte-surface bg-white/40 dark:bg-neutral-900/10 p-5.5 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/60 backdrop-blur-sm">
+              <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200 mb-3 flex items-center gap-1.5">
+                <Shield className="w-4 h-4 text-emerald-500 shrink-0" />
+                Privacy Sandboxed
+              </h3>
+              <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                This tool converts files client-side. WebAssembly models execute computations within your browser window, securing document containment.
+              </p>
+            </div>
+          )}
 
           {infoSections.map((sec, idx) => (
             <div

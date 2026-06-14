@@ -50,33 +50,33 @@ export const seoContentMap: Record<string, SeoData> = {
   },
   'pdf-to-word': {
     toolId: 'pdf-to-word',
-    metaTitle: 'Convert PDF to Word Online — 100% Free & Private | PDFlow',
-    metaDescription: 'Convert PDF files to editable Microsoft Word DOCX documents for free. Local browser-based conversion means 100% data privacy. No signup or email required.',
-    h1: 'Convert PDF to Word Online (100% Free & Private)',
-    intro: 'Extract page structures and reflow text content from PDF files directly into fully editable Microsoft Word DOCX documents in your browser. Files never leave your device.',
+    metaTitle: 'Convert PDF to Word Online — Secure & Fast | PDFlow',
+    metaDescription: 'Convert PDF files to editable Microsoft Word DOCX documents. Uses end-to-end encryption to a secure server with a strict zero-retention policy. No signup required.',
+    h1: 'Convert PDF to Word Online (Secure & Fast)',
+    intro: 'Extract page structures and reflow text content from PDF files directly into fully editable Microsoft Word DOCX documents. Files are transmitted via end-to-end encryption to our secure automated server and permanently deleted instantly after conversion.',
     benefits: [
-      { title: 'Absolute Privacy', description: 'No file uploads. Conversion runs locally on your machine, ensuring financial records and legal files stay in your control.' },
-      { title: 'High-Fidelity Layouts', description: 'Preserves margins, paragraph lines, text styles, and image attachments from the source PDF.' },
+      { title: 'Zero-Retention Policy', description: 'Files are processed securely and deleted instantly from our automated servers. Nothing is ever saved or stored.' },
+      { title: 'High-Fidelity Layouts', description: 'Advanced processing preserves margins, paragraph lines, text styles, and image attachments from the source PDF.' },
       { title: 'Completely Free', description: 'No caps on daily conversions, no page count restrictions, and no watermark notes.' }
     ],
     guideHtml: `
-      <h2>The Secure Alternative to Cloud PDF Converters</h2>
-      <p>Converting PDF to Word is one of the most common daily document workflows, yet almost all online tools require you to submit your files to their servers. PDFlow deconstructs and compiles files directly inside the browser using client-side libraries. Your documents are processed locally, providing complete safety for enterprise and private workflows.</p>
+      <h2>Secure Cloud PDF to Word Converter</h2>
+      <p>Converting PDF to Word accurately requires advanced document reconstruction engines. PDFlow transmits your files using strict end-to-end encryption to our automated conversion servers. The server extracts the layout, compiles the Word document, returns it to you, and securely wipes the memory instantly.</p>
 
       <h2>How We Extract PDF Text and Layouts</h2>
-      <p>When you load a PDF, our script uses PDF.js to read binary text streams, character positions, and margins. It parses them and compiles them into a standard Word document structure, enabling seamless text editing. This is perfect for scraping contract text, editing resumes, or updating reports without retyping them from scratch.</p>
+      <p>When you load a PDF, our secure engine uses intelligent OCR and layout parsing to read text streams, character positions, and margins. It parses them and compiles them into a standard Word document structure, enabling seamless text editing. This is perfect for scraping contract text, editing resumes, or updating reports without retyping them from scratch.</p>
 
       <h2>How to Convert PDF to Word</h2>
       <ol>
         <li>Select the PDF file you wish to convert.</li>
         <li>Verify options and click the 'Start Conversion' button.</li>
-        <li>Our browser engine will parse and package the text elements into a DOCX format.</li>
+        <li>Our secure server will parse and package the text elements into a DOCX format.</li>
         <li>Download your editable Word document in seconds.</li>
       </ol>
     `,
     faqs: [
-      { q: 'Can I convert scanned PDFs to editable Word files?', a: 'Yes. For scanned documents (PDFs containing only images), use our OCR & AI PDF Text tool, which extracts characters from images and exports to Word.' },
-      { q: 'Does PDFlow save my document data?', a: 'No. PDFlow holds files only in active browser memory and clears them immediately upon page closure.' }
+      { q: 'Can I convert scanned PDFs to editable Word files?', a: 'Yes. Our server uses Optical Character Recognition (OCR) to extract text directly from scanned document images and exports them seamlessly to Word.' },
+      { q: 'Does PDFlow save my document data?', a: 'No. This tool operates on a strict zero-retention policy. Files are processed in temporary memory and permanently deleted the millisecond your conversion finishes.' }
     ],
     relatedTools: ['word-to-pdf', 'ocr-pdf', 'pdf-to-image']
   },
