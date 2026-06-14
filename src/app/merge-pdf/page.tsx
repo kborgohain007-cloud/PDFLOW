@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ToolPageShell } from '@/components/tool/ToolPageShell';
+import ToolPageShell from '@/components/tool/ToolPageShell';
 import { processMergePdf } from '@/utils/pdf-processors';
 import { seoContentMap } from '@/data/seo-content';
 import { MergePdfOptions } from '@/components/tool/MergePdfOptions';

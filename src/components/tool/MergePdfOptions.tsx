@@ -88,7 +88,7 @@ interface MergePdfOptionsProps {
   onTriggerProcess: () => void;
 }
 
-export const MergePdfOptions: React.FC<MergePdfOptionsProps> = ({ files, options, setOptions, onTriggerProcess }) => {
+export const MergePdfOptions = ({ files, options, setOptions, onTriggerProcess }: MergePdfOptionsProps) => {
   const [items, setItems] = useState<PageItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const initializedFiles = useRef<Set<string>>(new Set());

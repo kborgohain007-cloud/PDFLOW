@@ -664,7 +664,7 @@ export async function processPdfToEpub(
 // 17. Merge PDF
 export async function processMergePdf(
   files: File[],
-  options: { pageOrder: { fileIndex: number; pageIndex: number }[] },
+  options: any,
   onProgress: (p: number, s: string) => void
 ): Promise<{ blob: Blob; fileName: string }> {
   if (!options.pageOrder || options.pageOrder.length === 0) {
