@@ -1,110 +1,117 @@
 import os
-import shutil
+import io
 import tempfile
-import uuid
+import shutil
 import logging
-import subprocess
-from fastapi import FastAPI, File, UploadFile, BackgroundTasks, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pdf2docx import Converter
+from docx import Document
+from PIL import Image
+import pytesseract
+import fitz  # PyMuPDF (comes with pdf2docx)
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="PDFlow Secure Backend Services")
+app = FastAPI(title="PDFLOW Backend")
 
-# Allow requests from Next.js frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://pdflow.in", "*"],
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-def cleanup_files(*file_paths):
-    """Securely deletes temporary files after the response is sent."""
-    for file_path in file_paths:
-        try:
-            if os.path.exists(file_path):
-                if os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
-                else:
-                    os.remove(file_path)
-                logger.info(f"Securely wiped: {file_path}")
-        except Exception as e:
-            logger.error(f"Error wiping {file_path}: {e}")
+def has_extractable_text(pdf_path: str, min_chars: int = 50) -> bool:
+    """Check if the PDF has real text or is just images."""
+    try:
+        doc = fitz.open(pdf_path)
+        total = "".join(page.get_text() for page in doc)
+        doc.close()
+        return len(total.strip()) >= min_chars
+    except Exception as e:
+        logger.warning(f"Text check failed: {e}")
+        return False
 
-@app.get("/")
-def read_root():
-    return {"status": "Secure PDFlow API is running"}
+def ocr_pdf_to_docx(pdf_path: str, output_path: str):
+    """Render each page to an image, OCR it, and build a DOCX."""
+    doc = fitz.open(pdf_path)
+    word_doc = Document()
+    page_count = len(doc)
+
+    logger.info(f"OCR: processing {page_count} page(s)")
+
+    for i in range(page_count):
+        page = doc.load_page(i)
+        # Render at 200 DPI for clean OCR
+        mat = fitz.Matrix(200 / 72, 200 / 72)
+        pix = page.get_pixmap(matrix=mat)
+        img = Image.open(io.BytesIO(pix.tobytes("png")))
+
+        text = pytesseract.image_to_string(img).strip()
+        if text:
+            word_doc.add_paragraph(text)
+
+        if i < page_count - 1:
+            word_doc.add_page_break()
+
+    word_doc.save(output_path)
+    doc.close()
+    logger.info("OCR conversion complete")
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "engine": "pdf2docx+ocr"}
 
 @app.post("/api/convert/pdf-to-word")
-async def convert_pdf_to_word(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
+async def convert_pdf_to_word(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...)
+):
     if not file.filename.lower().endswith(".pdf"):
-        raise HTTPException(status_code=400, detail="File must be a PDF")
+        raise HTTPException(400, "Only PDF files allowed")
 
-    # Create a secure temporary directory
-    temp_dir = tempfile.mkdtemp()
-    
-    # Generate unique filenames
-    unique_id = str(uuid.uuid4())
-    pdf_filename = f"{unique_id}.pdf"
-    pdf_path = os.path.join(temp_dir, pdf_filename)
-    output_dir = os.path.join(temp_dir, "output")
-    os.makedirs(output_dir, exist_ok=True)
-    
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(400, "File too large. Max 10MB on free tier.")
+
+    tmp_dir = tempfile.mkdtemp(prefix="pdflow_")
+    input_path = os.path.join(tmp_dir, "input.pdf")
+    output_path = os.path.join(tmp_dir, "output.docx")
+
     try:
-        # Read and save the uploaded PDF securely
-        content = await file.read()
-        with open(pdf_path, "wb") as f:
-            f.write(content)
-        
-        logger.info(f"Processing PDF to Word via PP-Structure: {file.filename}")
-        
-        # Run PaddleOCR 3.x PP-Structure CLI
-        command = [
-            "paddleocr",
-            "pp_structurev3",
-            "-i", pdf_path,
-            "--save_path", output_dir
-        ]
-        
-        # Execute the command
-        process = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        
-        if process.returncode != 0:
-            logger.error(f"PaddleOCR Error: {process.stderr}")
-            raise Exception("PaddleOCR processing failed.")
-            
-        # The DOCX file should be generated inside output_dir/<unique_id>/<unique_id>.docx
-        # or output_dir/<unique_id>_ocr.docx. We will search for any .docx in the output_dir.
-        docx_path = None
-        for root, dirs, files in os.walk(output_dir):
-            for f in files:
-                if f.endswith(".docx"):
-                    docx_path = os.path.join(root, f)
-                    break
-            if docx_path:
-                break
-                
-        if not docx_path or not os.path.exists(docx_path):
-            raise Exception("DOCX file was not generated by PaddleOCR.")
+        with open(input_path, "wb") as f:
+            f.write(contents)
 
-        # Cleanup is scheduled to run AFTER the response is sent to ensure Zero-Retention
-        background_tasks.add_task(cleanup_files, temp_dir)
+        logger.info(f"Converting: {file.filename}")
 
-        # Return the DOCX file
-        base_name = os.path.splitext(file.filename)[0]
+        # Route based on content type
+        if has_extractable_text(input_path):
+            logger.info("Text-based PDF → pdf2docx")
+            cv = Converter(input_path)
+            cv.convert(output_path, start=0, end=None)
+            cv.close()
+        else:
+            logger.info("Scanned/image PDF → OCR")
+            ocr_pdf_to_docx(input_path, output_path)
+
+        if not os.path.exists(output_path):
+            raise HTTPException(500, "DOCX generation failed")
+
+        background_tasks.add_task(shutil.rmtree, tmp_dir, ignore_errors=True)
+
         return FileResponse(
-            docx_path, 
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-            filename=f"{base_name}_converted.docx"
+            output_path,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            filename=file.filename.replace(".pdf", ".docx").replace(".PDF", ".docx"),
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        # If an error occurs, clean up immediately
-        cleanup_files(temp_dir)
-        logger.error(f"Error during conversion: {e}")
-        raise HTTPException(status_code=500, detail=f"Error during PDF conversion: {str(e)}")
+        logger.exception("Conversion failed")
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise HTTPException(500, f"Conversion failed: {str(e)}")
