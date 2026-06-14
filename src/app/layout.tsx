@@ -7,6 +7,7 @@ import Navbar from "@/components/ui/Navbar";
 import ToastContainer from "@/components/ui/ToastContainer";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import Footer from "@/components/ui/Footer";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -76,6 +77,7 @@ export default function RootLayout({
           <main className="flex-grow flex flex-col relative z-10">
             {children}
           </main>
+          <Footer />
           <ToastContainer />
         </ThemeProvider>
         <Analytics />
