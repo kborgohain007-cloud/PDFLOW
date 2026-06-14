@@ -18,12 +18,12 @@ interface ToolPageShellProps {
   allowedTypes: string[];
   maxSizeMB: number;
   multiple?: boolean;
-  optionsComponent?: (props: { 
+  optionsComponent?: React.ComponentType<{ 
     files: File[]; 
     options: any; 
     setOptions: React.Dispatch<React.SetStateAction<any>>;
     onTriggerProcess: () => void;
-  }) => React.ReactNode;
+  }>;
   defaultOptions?: any;
   processFiles: (
     files: File[],
@@ -329,11 +329,11 @@ export default function ToolPageShell({
 
                     {optionsComponent && (
                       <div className="matte-surface bg-white/70 dark:bg-neutral-900/50 p-6 rounded-2xl border border-neutral-200/50 dark:border-neutral-800/80 backdrop-blur-sm">
-                        {optionsComponent({ 
-                          files, 
-                          options, 
+                        {React.createElement(optionsComponent, {
+                          files,
+                          options,
                           setOptions,
-                          onTriggerProcess: () => {} 
+                          onTriggerProcess: () => handleProcess()
                         })}
                       </div>
                     )}
