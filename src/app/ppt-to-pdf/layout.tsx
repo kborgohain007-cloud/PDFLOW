@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Convert PowerPoint to PDF Online — Free & Secure | PDFlow',
-  description: 'Convert PPTX/PPT slideshow presentations to high-quality PDF files. Secure, fast, and local browser-based file conversion.',
+  description: 'Convert PPTX slideshows to PDF documents. 100% private client-side conversion. Free forever, no registration needed.',
   alternates: {
     canonical: 'https://pdflow.in/ppt-to-pdf',
   }

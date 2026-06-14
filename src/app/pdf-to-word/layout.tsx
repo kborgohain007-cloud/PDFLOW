@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Convert PDF to Word Online — Free & Secure | PDFlow',
-  description: 'Convert PDF documents to editable Microsoft Word files (DOCX). Secure, fast, and local browser-based file conversion.',
+  title: 'Convert PDF to Word Online — Secure & Fast | PDFlow',
+  description: 'Convert PDF files to editable Microsoft Word DOCX documents. Uses end-to-end encryption to a secure server with a strict zero-retention policy. No signup required.',
   alternates: {
     canonical: 'https://pdflow.in/pdf-to-word',
   }

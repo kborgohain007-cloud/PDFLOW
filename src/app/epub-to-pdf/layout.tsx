@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Convert EPUB to PDF Online — Free & Secure | PDFlow',
-  description: 'Convert EPUB ebooks to high-quality PDF documents. Secure, fast, and local browser-based file conversion.',
+  description: 'Convert EPUB e-books to standardized PDF files. 100% private browser processing. Free forever, no signup.',
   alternates: {
     canonical: 'https://pdflow.in/epub-to-pdf',
   }

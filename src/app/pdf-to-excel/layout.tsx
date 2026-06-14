@@ -1,8 +1,8 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Convert PDF to Excel Online — Free & Secure | PDFlow',
-  description: 'Extract tables from PDF documents into Excel spreadsheets (XLSX). Secure, fast, and local browser-based file conversion.',
+  title: 'Convert PDF to Excel Online — Free & Local | PDFlow',
+  description: 'Extract table grids from PDF files and save them as Excel XLSX sheets for free. 100% private browser processing. No signup.',
   alternates: {
     canonical: 'https://pdflow.in/pdf-to-excel',
   }

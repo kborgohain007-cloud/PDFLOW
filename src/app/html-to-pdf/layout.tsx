@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Convert HTML to PDF Online — Free & Secure | PDFlow',
-  description: 'Convert HTML files or webpage code to high-quality PDF documents. Secure, fast, and local browser-based file conversion.',
+  description: 'Convert HTML files or website source code to PDF. 100% private browser processing. Free, no signup, no logs.',
   alternates: {
     canonical: 'https://pdflow.in/html-to-pdf',
   }
