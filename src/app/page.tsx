@@ -348,6 +348,60 @@ export default function Home() {
         </div>
       </section>
 
+      {/* 2.5 PREMIUM PDF EDITOR PRO HIGHLIGHT */}
+      <section className="scroll-mt-24 w-full">
+        <div className="matte-surface bg-gradient-to-br from-neutral-900 to-indigo-950 dark:from-neutral-950 dark:to-indigo-950/60 p-1 sm:p-1.5 rounded-3xl relative overflow-hidden shadow-2xl hover:shadow-indigo-500/20 transition-all group">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent opacity-50" />
+          <div className="bg-neutral-950/40 dark:bg-neutral-900/40 backdrop-blur-md rounded-[22px] border border-white/10 p-8 sm:p-12 relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="flex-1 max-w-xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs font-bold uppercase tracking-widest mb-6 shadow-[0_0_15px_rgba(99,102,241,0.2)]">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                <span>Most Powerful Tool</span>
+              </div>
+              <h2 className="font-heading font-black text-3xl sm:text-5xl text-white mb-4 tracking-tight drop-shadow-sm">
+                PDF Editor <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400">Pro</span>
+              </h2>
+              <p className="text-base sm:text-lg text-neutral-300 font-medium leading-relaxed mb-8 max-w-lg">
+                Edit PDFs visually — just like Canva, directly in your browser. Add text, freehand drawings, highlights, rotate pages, and manipulate files with zero uploads.
+              </p>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => router.push('/editor')}
+                  className="px-6 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-lg shadow-indigo-600/30 hover:shadow-indigo-500/40 active:scale-[0.98] flex items-center gap-2 group/btn"
+                >
+                  Launch Editor Workspace
+                  <ArrowRight className="w-5 h-5 group-hover/btn:translate-x-1 transition-transform" />
+                </button>
+              </div>
+            </div>
+            
+            {/* Abstract Decorative Editor Preview Graphic */}
+            <div className="hidden md:flex flex-1 w-full max-w-[400px] h-[300px] relative items-center justify-center pointer-events-none perspective-[1000px]">
+              <div className="absolute w-full h-full bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-2xl blur-3xl transform -rotate-6" />
+              <div className="w-[85%] h-[85%] bg-white rounded-xl shadow-2xl overflow-hidden relative z-10 transform rotate-2 group-hover:rotate-0 transition-all duration-700 border border-neutral-200 flex flex-col">
+                <div className="w-full h-8 bg-neutral-100 border-b border-neutral-200 flex items-center px-3 gap-2">
+                  <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-red-400"/><div className="w-2.5 h-2.5 rounded-full bg-amber-400"/><div className="w-2.5 h-2.5 rounded-full bg-emerald-400"/></div>
+                  <div className="mx-auto w-32 h-3 bg-neutral-200 rounded-full" />
+                </div>
+                <div className="flex-1 flex p-2 gap-2">
+                  <div className="w-12 h-full border-r border-neutral-100 flex flex-col gap-2 pt-2">
+                    <div className="w-8 h-10 bg-indigo-50 rounded mx-auto border border-indigo-100" />
+                    <div className="w-8 h-10 bg-neutral-50 rounded mx-auto border border-neutral-100 opacity-50" />
+                  </div>
+                  <div className="flex-1 p-4 relative">
+                    <div className="w-full h-4 bg-neutral-200 rounded-sm mb-3" />
+                    <div className="w-3/4 h-4 bg-neutral-200 rounded-sm mb-6" />
+                    <div className="absolute top-12 left-8 w-24 h-12 border-2 border-indigo-400 bg-indigo-50/50 rounded-md flex items-center justify-center">
+                      <span className="text-[10px] font-bold text-indigo-600">Text Edit</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* 3. TOOL GRID SECTION */}
       <section id="tools" className="scroll-mt-24 flex flex-col gap-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
