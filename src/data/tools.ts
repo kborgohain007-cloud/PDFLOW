@@ -18,7 +18,7 @@ export interface ToolItem {
   name: string;
   slug: string;
   description: string;
-  category: 'conversion' | 'optimization' | 'ocr-ai' | 'editor-pro';
+  category: 'conversion' | 'optimization' | 'ocr-ai';
   inputFormats: string[];
   outputFormats: string[];
   maxSizeMB: number;
@@ -235,19 +235,5 @@ export const toolsData: ToolItem[] = [
     maxSizeMB: 50,
     batchSupport: true,
     iconName: 'ai'
-  },
-  
-  // Editor Pro
-  {
-    id: 'editor-pro',
-    name: 'PDF Editor Pro',
-    slug: 'editor',
-    description: 'Edit PDFs visually — just like Canva, directly in your browser.',
-    category: 'editor-pro',
-    inputFormats: ['.pdf'],
-    outputFormats: ['.pdf'],
-    maxSizeMB: 100,
-    batchSupport: true,
-    iconName: 'sparkles'
   }
 ];
