@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { produce } from 'immer';
 
+// ─── Types ───────────────────────────────────────────────────────────
+
 export type ToolType = 'select' | 'text' | 'draw' | 'highlight' | 'eraser';
 
 export interface EditorDocument {
@@ -13,7 +15,7 @@ export interface EditorDocument {
 export interface DrawingOperation {
   id: string;
   type: 'draw' | 'highlight';
-  points: number[]; // Flat array of [x1, y1, x2, y2, ...]
+  points: number[];
   stroke: string;
   strokeWidth: number;
   opacity: number;
@@ -35,31 +37,29 @@ export interface TextOperation {
 export type CanvasOperation = DrawingOperation | TextOperation;
 
 export interface PageState {
-  id: string; // unique id for dnd-kit
-  documentId: string; // references EditorDocument
-  originalPageIndex: number; // 0-based
+  id: string;
+  documentId: string;
+  originalPageIndex: number;
   rotation: number;
-  width: number; // base width
-  height: number; // base height
+  width: number;
+  height: number;
   thumbnailUrl: string | null;
   operations: CanvasOperation[];
 }
 
-export interface EditorHistoryState {
+interface HistorySnapshot {
   pages: PageState[];
 }
 
+// ─── Store Interface ─────────────────────────────────────────────────
+
 interface EditorStore {
-  // Document State
   documents: EditorDocument[];
   pages: PageState[];
   activePageId: string | null;
-  
-  // Viewport State
   zoomLevel: number;
-  
-  // Tool State
   activeTool: ToolType;
+
   toolSettings: {
     strokeColor: string;
     strokeWidth: number;
@@ -68,42 +68,49 @@ interface EditorStore {
     textColor: string;
     opacity: number;
   };
-  
-  // History Stack (Undo/Redo)
-  past: EditorHistoryState[];
-  future: EditorHistoryState[];
-  
-  // Actions
-  addDocument: (doc: EditorDocument, initPages: PageState[]) => void;
-  setActivePage: (pageId: string) => void;
+
+  // Undo/Redo
+  past: HistorySnapshot[];
+  future: HistorySnapshot[];
+
+  // Document actions
+  addDocument: (doc: EditorDocument, pages: PageState[]) => void;
+
+  // Navigation
+  setActivePage: (id: string) => void;
   setActiveTool: (tool: ToolType) => void;
-  setZoom: (zoom: number) => void;
-  updateToolSettings: (settings: Partial<EditorStore['toolSettings']>) => void;
-  
-  // Page Operations
-  reorderPages: (startIndex: number, endIndex: number) => void;
-  deletePage: (pageId: string) => void;
-  rotatePage: (pageId: string, angle: number) => void; // angle is cumulative
-  
-  // Canvas Operations
+  setZoom: (level: number) => void;
+  updateToolSettings: (patch: Partial<EditorStore['toolSettings']>) => void;
+
+  // Page mutations
+  reorderPages: (from: number, to: number) => void;
+  deletePage: (id: string) => void;
+  rotatePage: (id: string, degrees: number) => void;
+
+  // Canvas operations
   addOperation: (pageId: string, op: CanvasOperation) => void;
-  updateOperation: (pageId: string, opId: string, changes: Partial<CanvasOperation>) => void;
+  updateOperation: (pageId: string, opId: string, patch: Partial<CanvasOperation>) => void;
   deleteOperation: (pageId: string, opId: string) => void;
-  
-  // History Actions
+
+  // History
   undo: () => void;
   redo: () => void;
 }
 
-// Helper to push history
-function saveHistory(state: EditorStore) {
-  state.past.push({ pages: JSON.parse(JSON.stringify(state.pages)) });
+// ─── Helpers ─────────────────────────────────────────────────────────
+
+const MAX_HISTORY = 40;
+
+function pushHistory(state: EditorStore): void {
+  const snapshot: HistorySnapshot = {
+    pages: JSON.parse(JSON.stringify(state.pages)),
+  };
+  state.past.push(snapshot);
   state.future = [];
-  // Keep history manageable
-  if (state.past.length > 30) {
-    state.past.shift();
-  }
+  if (state.past.length > MAX_HISTORY) state.past.shift();
 }
+
+// ─── Store ───────────────────────────────────────────────────────────
 
 export const useEditorStore = create<EditorStore>((set) => ({
   documents: [],
@@ -111,6 +118,7 @@ export const useEditorStore = create<EditorStore>((set) => ({
   activePageId: null,
   zoomLevel: 100,
   activeTool: 'select',
+
   toolSettings: {
     strokeColor: '#ef4444',
     strokeWidth: 4,
@@ -119,87 +127,122 @@ export const useEditorStore = create<EditorStore>((set) => ({
     textColor: '#000000',
     opacity: 1,
   },
+
   past: [],
   future: [],
 
-  addDocument: (doc, initPages) => set(produce((state: EditorStore) => {
-    saveHistory(state);
-    state.documents.push(doc);
-    state.pages.push(...initPages);
-    if (!state.activePageId && initPages.length > 0) {
-      state.activePageId = initPages[0].id;
-    }
-  })),
+  // ── Document ─────────────────────────────────────────────────────
 
-  setActivePage: (pageId) => set({ activePageId: pageId }),
+  addDocument: (doc, initPages) =>
+    set(
+      produce((s: EditorStore) => {
+        pushHistory(s);
+        s.documents.push(doc);
+        s.pages.push(...initPages);
+        if (!s.activePageId && initPages.length > 0) {
+          s.activePageId = initPages[0].id;
+        }
+      }),
+    ),
+
+  // ── Navigation ───────────────────────────────────────────────────
+
+  setActivePage: (id) => set({ activePageId: id }),
   setActiveTool: (tool) => set({ activeTool: tool }),
-  setZoom: (zoom) => set({ zoomLevel: Math.max(10, Math.min(500, zoom)) }),
-  updateToolSettings: (settings) => set(produce((state: EditorStore) => {
-    state.toolSettings = { ...state.toolSettings, ...settings };
-  })),
+  setZoom: (level) => set({ zoomLevel: Math.max(10, Math.min(500, level)) }),
 
-  reorderPages: (startIndex, endIndex) => set(produce((state: EditorStore) => {
-    saveHistory(state);
-    const result = Array.from(state.pages);
-    const [removed] = result.splice(startIndex, 1);
-    result.splice(endIndex, 0, removed);
-    state.pages = result;
-  })),
+  updateToolSettings: (patch) =>
+    set(
+      produce((s: EditorStore) => {
+        Object.assign(s.toolSettings, patch);
+      }),
+    ),
 
-  deletePage: (pageId) => set(produce((state: EditorStore) => {
-    saveHistory(state);
-    state.pages = state.pages.filter(p => p.id !== pageId);
-    if (state.activePageId === pageId) {
-      state.activePageId = state.pages.length > 0 ? state.pages[0].id : null;
-    }
-  })),
+  // ── Page mutations ───────────────────────────────────────────────
 
-  rotatePage: (pageId, angle) => set(produce((state: EditorStore) => {
-    saveHistory(state);
-    const page = state.pages.find(p => p.id === pageId);
-    if (page) {
-      page.rotation = (page.rotation + angle) % 360;
-    }
-  })),
+  reorderPages: (from, to) =>
+    set(
+      produce((s: EditorStore) => {
+        pushHistory(s);
+        const [moved] = s.pages.splice(from, 1);
+        s.pages.splice(to, 0, moved);
+      }),
+    ),
 
-  addOperation: (pageId, op) => set(produce((state: EditorStore) => {
-    saveHistory(state);
-    const page = state.pages.find(p => p.id === pageId);
-    if (page) page.operations.push(op);
-  })),
+  deletePage: (id) =>
+    set(
+      produce((s: EditorStore) => {
+        pushHistory(s);
+        s.pages = s.pages.filter((p) => p.id !== id);
+        if (s.activePageId === id) {
+          s.activePageId = s.pages[0]?.id ?? null;
+        }
+      }),
+    ),
 
-  updateOperation: (pageId, opId, changes) => set(produce((state: EditorStore) => {
-    // Note: Do not saveHistory on EVERY mousemove update to avoid 1000 history entries.
-    // History saves for updates should be done carefully at the component level on DragEnd.
-    const page = state.pages.find(p => p.id === pageId);
-    if (page) {
-      const opIndex = page.operations.findIndex(o => o.id === opId);
-      if (opIndex !== -1) {
-        page.operations[opIndex] = { ...page.operations[opIndex], ...changes } as CanvasOperation;
-      }
-    }
-  })),
+  rotatePage: (id, deg) =>
+    set(
+      produce((s: EditorStore) => {
+        pushHistory(s);
+        const page = s.pages.find((p) => p.id === id);
+        if (page) page.rotation = (page.rotation + deg) % 360;
+      }),
+    ),
 
-  deleteOperation: (pageId, opId) => set(produce((state: EditorStore) => {
-    saveHistory(state);
-    const page = state.pages.find(p => p.id === pageId);
-    if (page) {
-      page.operations = page.operations.filter(o => o.id !== opId);
-    }
-  })),
+  // ── Canvas operations ────────────────────────────────────────────
 
-  undo: () => set(produce((state: EditorStore) => {
-    if (state.past.length === 0) return;
-    const previous = state.past.pop()!;
-    state.future.push({ pages: JSON.parse(JSON.stringify(state.pages)) });
-    state.pages = previous.pages;
-  })),
+  addOperation: (pageId, op) =>
+    set(
+      produce((s: EditorStore) => {
+        pushHistory(s);
+        const page = s.pages.find((p) => p.id === pageId);
+        if (page) page.operations.push(op);
+      }),
+    ),
 
-  redo: () => set(produce((state: EditorStore) => {
-    if (state.future.length === 0) return;
-    const next = state.future.pop()!;
-    state.past.push({ pages: JSON.parse(JSON.stringify(state.pages)) });
-    state.pages = next.pages;
-  })),
+  updateOperation: (pageId, opId, patch) =>
+    set(
+      produce((s: EditorStore) => {
+        // No history push on every mousemove — callers should push on dragEnd
+        const page = s.pages.find((p) => p.id === pageId);
+        if (!page) return;
+        const idx = page.operations.findIndex((o) => o.id === opId);
+        if (idx !== -1) {
+          page.operations[idx] = { ...page.operations[idx], ...patch } as CanvasOperation;
+        }
+      }),
+    ),
 
+  deleteOperation: (pageId, opId) =>
+    set(
+      produce((s: EditorStore) => {
+        pushHistory(s);
+        const page = s.pages.find((p) => p.id === pageId);
+        if (page) {
+          page.operations = page.operations.filter((o) => o.id !== opId);
+        }
+      }),
+    ),
+
+  // ── History ──────────────────────────────────────────────────────
+
+  undo: () =>
+    set(
+      produce((s: EditorStore) => {
+        if (s.past.length === 0) return;
+        const prev = s.past.pop()!;
+        s.future.push({ pages: JSON.parse(JSON.stringify(s.pages)) });
+        s.pages = prev.pages;
+      }),
+    ),
+
+  redo: () =>
+    set(
+      produce((s: EditorStore) => {
+        if (s.future.length === 0) return;
+        const next = s.future.pop()!;
+        s.past.push({ pages: JSON.parse(JSON.stringify(s.pages)) });
+        s.pages = next.pages;
+      }),
+    ),
 }));
