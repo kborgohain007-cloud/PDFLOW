@@ -36,7 +36,7 @@ export default function EditorCanvas() {
     const renderPdfPage = async () => {
       if (!canvasRef.current || !activePage || !activeDoc) return;
 
-      const pdf = await pdfjsLib.getDocument({ data: activeDoc.originalBuffer }).promise;
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(activeDoc.originalBuffer) }).promise;
       const pdfPage = await pdf.getPage(activePage.originalPageIndex + 1);
       
       const scale = zoomLevel / 100;

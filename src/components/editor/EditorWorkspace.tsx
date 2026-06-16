@@ -11,7 +11,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure PDF.js worker
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 }
 
 export default function EditorWorkspace() {
@@ -22,41 +22,44 @@ export default function EditorWorkspace() {
   const handleUpload = async (files: File[]) => {
     if (files.length === 0) return;
     
-    // For Phase 1, we process them one by one or merge. 
-    // Here we'll process the first one.
-    const file = files[0];
-    const arrayBuffer = await file.arrayBuffer();
-    
-    // Load with PDF.js to get page dimensions and thumbnails
-    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-    const pdf = await loadingTask.promise;
-    
-    const docId = crypto.randomUUID();
-    
-    // Extract pages info
-    const initPages = [];
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const viewport = page.getViewport({ scale: 1.0 });
+    try {
+      const file = files[0];
+      const arrayBuffer = await file.arrayBuffer();
       
-      initPages.push({
-        id: crypto.randomUUID(),
-        documentId: docId,
-        originalPageIndex: i - 1,
-        rotation: 0,
-        width: viewport.width,
-        height: viewport.height,
-        thumbnailUrl: null, // Will be generated asynchronously later
-        operations: []
-      });
-    }
+      // Load with PDF.js to get page dimensions and thumbnails
+      const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+      const pdf = await loadingTask.promise;
+      
+      const docId = crypto.randomUUID();
+      
+      // Extract pages info
+      const initPages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 1.0 });
+        
+        initPages.push({
+          id: crypto.randomUUID(),
+          documentId: docId,
+          originalPageIndex: i - 1,
+          rotation: 0,
+          width: viewport.width,
+          height: viewport.height,
+          thumbnailUrl: null, // Will be generated asynchronously later
+          operations: []
+        });
+      }
 
-    addDocument({
-      id: docId,
-      name: file.name,
-      originalBuffer: arrayBuffer,
-      pageCount: pdf.numPages
-    }, initPages);
+      addDocument({
+        id: docId,
+        name: file.name,
+        originalBuffer: arrayBuffer,
+        pageCount: pdf.numPages
+      }, initPages);
+    } catch (err) {
+      console.error("PDF Load Error:", err);
+      alert("Failed to load PDF. Check browser console for worker details.");
+    }
   };
 
   if (documents.length === 0) {

@@ -63,7 +63,7 @@ function PageThumbnail({
       const doc = documents.find(d => d.id === page.documentId);
       if (!doc) return;
 
-      const pdf = await pdfjsLib.getDocument({ data: doc.originalBuffer }).promise;
+      const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(doc.originalBuffer) }).promise;
       const pdfPage = await pdf.getPage(page.originalPageIndex + 1);
       
       const viewport = pdfPage.getViewport({ scale: 0.2, rotation: page.rotation });
