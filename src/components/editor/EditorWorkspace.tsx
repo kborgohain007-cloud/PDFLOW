@@ -11,7 +11,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure PDF.js worker
 if (typeof window !== 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+  pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 }
 
 export default function EditorWorkspace() {
@@ -62,28 +62,83 @@ export default function EditorWorkspace() {
     }
   };
 
+  // Local state to bridge the UploadZone component
+  const [localFiles, setLocalFiles] = React.useState<File[]>([]);
+  
+  React.useEffect(() => {
+    if (localFiles.length > 0) {
+      handleUpload(localFiles);
+    }
+  }, [localFiles]);
+
   if (documents.length === 0) {
+    const seoData = require('@/data/seo-content').seoContentMap['editor-pro'];
     return (
-      <div className="w-full h-full flex flex-col">
-        {/* Simple Navbar for empty state */}
-        <div className="h-14 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center px-4">
-          <span className="font-heading font-bold text-lg text-indigo-600 dark:text-indigo-400">PDF Editor Pro</span>
-        </div>
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="max-w-2xl w-full">
-            <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-200 mb-6 text-center">Start Editing</h2>
-            <UploadZone 
-              allowedTypes={['.pdf']}
-              multiple={true}
-              maxSizeMB={100}
-              onFilesSelected={handleUpload}
-              isProcessing={false}
-              progress={0}
-              processingStatus=""
-              onReset={() => {}}
-              files={[]}
-              setFiles={() => {}}
-            />
+      <div className="w-full min-h-screen bg-background flex flex-col relative z-20">
+        <div className="pt-20 pb-16 px-4 relative overflow-hidden flex-1">
+          <div className="max-w-4xl mx-auto text-center relative z-10">
+            <h1 className="text-4xl sm:text-5xl font-heading font-black text-neutral-800 dark:text-neutral-100 mb-6 drop-shadow-sm leading-tight">
+              {seoData.h1}
+            </h1>
+            <p className="text-lg sm:text-xl text-neutral-600 dark:text-neutral-300 max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+              {seoData.intro}
+            </p>
+            
+            <div className="relative mx-auto max-w-2xl bg-white/40 dark:bg-neutral-900/40 rounded-3xl p-1 shadow-2xl backdrop-blur-xl border border-white/20 dark:border-neutral-800/30">
+              <UploadZone 
+                allowedTypes={['.pdf']}
+                multiple={true}
+                maxSizeMB={100}
+                onFilesSelected={(files) => setLocalFiles(files)}
+                isProcessing={false}
+                progress={0}
+                processingStatus=""
+                onReset={() => {}}
+                files={localFiles}
+                setFiles={setLocalFiles as any}
+              />
+            </div>
+            
+            {/* Detailed SEO Content Article to match other tools */}
+            <article className="max-w-4xl mx-auto mt-20 border-t border-neutral-200/50 dark:border-neutral-800/40 pt-12 flex flex-col gap-10 text-neutral-600 dark:text-neutral-300 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {seoData.benefits.map((b: any, idx: number) => (
+                  <div key={idx} className="matte-surface bg-white/40 dark:bg-neutral-900/20 p-5 rounded-2xl border border-neutral-200/40 dark:border-neutral-800/50">
+                    <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200 mb-2">
+                      {b.title}
+                    </h3>
+                    <p className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 leading-relaxed">
+                      {b.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div 
+                className="prose prose-neutral dark:prose-invert max-w-none text-sm leading-relaxed flex flex-col gap-4.5"
+                dangerouslySetInnerHTML={{ __html: seoData.guideHtml }}
+              />
+
+              {seoData.faqs.length > 0 && (
+                <div className="flex flex-col gap-6">
+                  <h2 className="font-heading font-extrabold text-xl sm:text-2xl text-neutral-900 dark:text-neutral-50 border-b border-neutral-100 dark:border-neutral-900 pb-3">
+                    Frequently Asked Questions
+                  </h2>
+                  <div className="flex flex-col gap-3">
+                    {seoData.faqs.map((faq: any, idx: number) => (
+                      <div key={idx} className="matte-surface bg-white/30 dark:bg-neutral-900/10 border border-neutral-200/40 dark:border-neutral-800/50 p-5 rounded-2xl flex flex-col gap-2">
+                        <h3 className="font-heading font-extrabold text-sm text-neutral-800 dark:text-neutral-200">
+                          {faq.q}
+                        </h3>
+                        <p className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 leading-relaxed">
+                          {faq.a}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </article>
           </div>
         </div>
       </div>

@@ -11,6 +11,34 @@ export interface SeoData {
 }
 
 export const seoContentMap: Record<string, SeoData> = {
+  'editor-pro': {
+    toolId: 'editor-pro',
+    metaTitle: 'PDF Editor Pro — Edit PDFs Online Free | PDFlow',
+    metaDescription: 'Advanced browser-based PDF editing engine. Edit PDFs visually with zero uploads.',
+    h1: 'PDF Editor Pro',
+    intro: 'Edit PDFs visually — just like Canva, directly in your browser. Add text, freehand drawings, highlights, rotate pages, and manipulate files with zero uploads.',
+    benefits: [
+      { title: 'Zero Uploads', description: 'Your PDF never leaves your device. All editing is processed directly in your browser memory.' },
+      { title: 'Canva-style Editing', description: 'Draw, highlight, and inject text with a smooth, interactive 60fps canvas engine.' },
+      { title: 'Full Undo/Redo Support', description: 'Made a mistake? Just hit Undo. Every edit is tracked perfectly without lagging your browser.' }
+    ],
+    guideHtml: `
+      <h2>How to Edit a PDF Document</h2>
+      <ol>
+        <li>Upload your PDF file above.</li>
+        <li>The full-screen Editor Workspace will instantly launch.</li>
+        <li>Select a page from the left sidebar to view it on the main canvas.</li>
+        <li>Use the tools on the right sidebar (Text, Draw, Highlight) to annotate the page.</li>
+        <li>When finished, click Export PDF in the top right corner.</li>
+      </ol>
+    `,
+    faqs: [
+      { q: 'Is my data secure?', a: 'Absolutely. The Editor Pro runs entirely inside your local browser. No files are uploaded to our servers.' },
+      { q: 'Can I add a signature?', a: 'Yes! Select the Draw tool on the right sidebar, choose a color, and draw your signature directly on the document.' },
+      { q: 'How do I rearrange pages?', a: 'Inside the editor, simply drag and drop the page thumbnails in the left sidebar to reorder them.' }
+    ],
+    relatedTools: ['merge-pdf', 'pdf-to-word', 'compress-pdf']
+  },
   'compress-pdf': {
     toolId: 'compress-pdf',
     metaTitle: 'Free PDF Compressor Online — Shrink PDF File Size Privately | PDFlow',
