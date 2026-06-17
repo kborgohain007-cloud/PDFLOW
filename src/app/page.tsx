@@ -348,6 +348,66 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ✨ PDF EDITOR PRO — PREMIUM STANDALONE CARD */}
+      <section className="scroll-mt-24">
+        <Link href="/editor">
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="relative overflow-hidden rounded-3xl p-8 md:p-10 bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#0f172a] border border-emerald-500/20 shadow-2xl shadow-emerald-500/5 group cursor-pointer hover:shadow-emerald-500/15 transition-all duration-500"
+          >
+            {/* Glow effects */}
+            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:bg-emerald-500/15 transition-all duration-700" />
+            <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4 group-hover:bg-indigo-500/15 transition-all duration-700" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6">
+              <div className="flex-1">
+                {/* Badges */}
+                <div className="flex flex-wrap items-center gap-2.5 mb-4">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 text-xs font-bold">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    PDF Editor Pro
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/25 text-amber-400 text-[10px] font-bold">
+                    🔥 Most Powerful Tool
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h2 className="font-heading font-extrabold text-2xl md:text-3xl text-white mb-3 tracking-tight">
+                  Edit PDFs Visually — Like Canva
+                </h2>
+
+                {/* Description */}
+                <p className="text-sm text-neutral-400 leading-relaxed max-w-xl">
+                  Add text, draw, highlight, insert shapes, rearrange pages, and export — all directly in your browser. 
+                  No uploads, no installs, no learning curve.
+                </p>
+
+                {/* Feature pills */}
+                <div className="flex flex-wrap gap-2 mt-5">
+                  {['Text Editor', 'Freehand Draw', 'Highlights', 'Page Manager', 'Shapes', 'Undo/Redo', 'Auto-Save', 'Export PDF'].map((feature) => (
+                    <span key={feature} className="px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-neutral-300 text-[11px] font-medium">
+                      {feature}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* CTA */}
+              <div className="md:text-right shrink-0">
+                <div className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-600/20 group-hover:shadow-emerald-500/30 group-hover:scale-[1.02]">
+                  Open Editor
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </Link>
+      </section>
+
       {/* 3. TOOL GRID SECTION */}
       <section id="tools" className="scroll-mt-24 flex flex-col gap-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">

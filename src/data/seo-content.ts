@@ -387,5 +387,37 @@ export const seoContentMap: Record<string, SeoData> = {
       { q: 'How long is history saved?', a: 'Metadata is persistent until you manually clear it or delete site data. Raw file content is cleared when you close the tab.' }
     ],
     relatedTools: ['compress-pdf', 'pdf-to-word', 'ocr-pdf']
+  },
+
+  'editor': {
+    toolId: 'editor',
+    metaTitle: 'PDF Editor Pro — Edit PDFs Online Free Like Canva | PDFlow',
+    metaDescription: 'Edit PDF files visually in your browser. Add text, draw, highlight, rearrange pages, insert shapes, and export — all free and private.',
+    h1: 'PDF Editor Pro — Edit PDFs Like Canva',
+    intro: 'A powerful browser-based PDF editor that lets you visually edit documents just like a design canvas. Add text, draw freehand, highlight sections, insert shapes, rearrange pages, and export — all running locally in your browser with zero uploads.',
+    benefits: [
+      { title: 'Canva-Like Editing Experience', description: 'Click anywhere on your PDF to add text, draw, or highlight. Floating toolbars appear contextually. Scroll through pages naturally and edit inline.' },
+      { title: 'Full Page Management', description: 'Drag and drop to reorder pages. Rotate, duplicate, or delete individual pages with one click. Your document, your order.' },
+      { title: 'Auto-Save Progress', description: 'Your editing progress is automatically saved every 30 seconds to your browser local storage. Come back tomorrow and continue exactly where you left off.' },
+      { title: 'Professional Export', description: 'Export your edited PDF with all annotations baked in, or download individual pages as high-quality images. Multiple compression levels available.' }
+    ],
+    guideHtml: `
+      <h2>How to Use PDF Editor Pro</h2>
+      <ol>
+        <li>Upload one or more PDF files using the drag-and-drop zone.</li>
+        <li>Use the tool sidebar on the right to switch between Select, Text, Draw, Highlight, Shape, and Eraser tools.</li>
+        <li>Click on any page to activate it and start editing inline.</li>
+        <li>Rearrange pages by dragging thumbnails in the left sidebar.</li>
+        <li>Use Ctrl+Z to undo and Ctrl+Shift+Z to redo any changes.</li>
+        <li>Click Export to download your edited PDF or page images.</li>
+      </ol>
+    `,
+    faqs: [
+      { q: 'Is the PDF Editor truly free?', a: 'Yes, PDF Editor Pro is completely free with no watermarks, no daily limits, and no account required.' },
+      { q: 'Are my files uploaded to a server?', a: 'No. All editing happens locally in your browser. Your files never leave your device.' },
+      { q: 'Can I save my work and come back later?', a: 'Yes. Your progress is auto-saved every 30 seconds to your browser local storage. You can resume editing anytime.' },
+      { q: 'What tools are available?', a: 'Text insertion with font controls, freehand drawing with pen/marker, rectangle highlighting, shapes (rectangle, circle, arrow, line), eraser, page management (reorder, rotate, delete, duplicate), and professional export.' }
+    ],
+    relatedTools: ['compress-pdf', 'merge-pdf', 'ocr-pdf', 'pdf-to-image']
   }
 };
