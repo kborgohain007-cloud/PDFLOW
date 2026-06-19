@@ -77,8 +77,8 @@ export default function ZoomControls() {
   const zoomPercent = Math.round(zoom * 100);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center pointer-events-none pb-3 px-3">
-      <div className="pointer-events-auto flex items-center gap-1 sm:gap-2 px-3 py-2 rounded-2xl bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border border-neutral-200/50 dark:border-neutral-700/50 shadow-xl shadow-black/5 dark:shadow-black/30">
+    <div className="shrink-0 z-40 flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl border-t border-neutral-200/50 dark:border-neutral-700/50 py-1.5 px-3">
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* ---- Zoom Out ---- */}
         <button
           onClick={handleZoomOut}
@@ -94,7 +94,7 @@ export default function ZoomControls() {
           <ZoomOut className="w-4 h-4" />
         </button>
 
-        {/* ---- Zoom Slider ---- */}
+        {/* ---- Zoom Slider (hidden on small mobile) ---- */}
         <div className="hidden sm:flex items-center gap-2 w-28">
           <input
             type="range"
@@ -135,23 +135,22 @@ export default function ZoomControls() {
           {zoomPercent}%
         </button>
 
-        {/* ---- Divider ---- */}
-        <div className="h-5 w-px bg-neutral-200 dark:bg-neutral-700 mx-0.5" />
+        {/* ---- Divider (hidden on mobile) ---- */}
+        <div className="hidden sm:block h-5 w-px bg-neutral-200 dark:bg-neutral-700 mx-0.5" />
 
-        {/* ---- Fit Page ---- */}
+        {/* ---- Fit buttons (hidden on mobile) ---- */}
         <button
           onClick={handleFitPage}
-          className="p-1.5 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white active:scale-90 transition-all"
+          className="hidden sm:flex p-1.5 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white active:scale-90 transition-all"
           title="Fit to page"
           aria-label="Fit to page"
         >
           <Maximize className="w-4 h-4" />
         </button>
 
-        {/* ---- Fit Width ---- */}
         <button
           onClick={handleFitWidth}
-          className="p-1.5 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white active:scale-90 transition-all"
+          className="hidden sm:flex p-1.5 rounded-lg text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 hover:text-neutral-900 dark:hover:text-white active:scale-90 transition-all"
           title="Fit to width"
           aria-label="Fit to width"
         >
@@ -179,11 +178,11 @@ export default function ZoomControls() {
         <span className="text-xs font-medium text-neutral-600 dark:text-neutral-300 tabular-nums whitespace-nowrap px-1">
           {totalPages > 0 ? (
             <>
-              Page{' '}
+              <span className="hidden sm:inline">Page </span>
               <span className="font-semibold text-neutral-800 dark:text-white">
                 {displayPage}
-              </span>{' '}
-              of{' '}
+              </span>
+              {' / '}
               <span className="font-semibold text-neutral-800 dark:text-white">
                 {totalPages}
               </span>

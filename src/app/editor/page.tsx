@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useEditorStore } from '@/stores/editor-store';
 import { loadProject } from '@/lib/editor-db';
 import type { PageData } from '@/types/editor';
@@ -23,6 +23,13 @@ export default function EditorPage() {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  // ---- Reset store on unmount (so navigating back shows upload) ----
+  useEffect(() => {
+    return () => {
+      reset();
+    };
+  }, [reset]);
+
   // ---- Load PDF from Files ----
   const handleFilesSelected = useCallback(async (files: File[]) => {
     if (files.length === 0) return;
@@ -33,12 +40,10 @@ export default function EditorPage() {
       let combinedName: string;
 
       if (files.length === 1) {
-        // Single file
         const buffer = await files[0].arrayBuffer();
         combinedBytes = new Uint8Array(buffer);
         combinedName = files[0].name;
       } else {
-        // Multiple files — merge using pdf-lib
         const { PDFDocument } = await import('pdf-lib');
         const mergedPdf = await PDFDocument.create();
 
@@ -54,7 +59,6 @@ export default function EditorPage() {
         combinedName = 'merged_document.pdf';
       }
 
-      // Initialize editor with PDF
       await initializeEditor(combinedBytes, combinedName);
     } catch (err) {
       console.error('Error loading files:', err);
@@ -74,16 +78,13 @@ export default function EditorPage() {
         return;
       }
 
-      // Restore PDF bytes
       const buffer = await data.file.pdfBlob.arrayBuffer();
       const bytes = new Uint8Array(buffer);
 
-      // Restore state
       setPdfBytes(bytes, data.file.filename);
       setProjectId(projectId);
       setProjectName(data.project.name);
 
-      // Restore pages and annotations from snapshot
       const pages: PageData[] = JSON.parse(data.snapshot.pages);
       const pageOrder: string[] = JSON.parse(data.snapshot.pageOrder);
       const annotations: Record<string, any[]> = JSON.parse(data.snapshot.annotations);
@@ -95,7 +96,6 @@ export default function EditorPage() {
         setAnnotations(pageId, anns);
       }
 
-      // Generate thumbnails
       await generateThumbnails(bytes, pages);
     } catch (err) {
       console.error('Error loading project:', err);
@@ -104,16 +104,82 @@ export default function EditorPage() {
     }
   }, []);
 
+  // ---- Insert PDF (append pages to existing doc) ----
+  const handleInsertPdf = useCallback(async (files: File[]) => {
+    if (files.length === 0 || !pdfBytes) return;
+
+    try {
+      const { PDFDocument } = await import('pdf-lib');
+
+      // Load current document
+      const currentPdf = await PDFDocument.load(pdfBytes.buffer.slice(
+        pdfBytes.byteOffset,
+        pdfBytes.byteOffset + pdfBytes.byteLength,
+      ));
+
+      // Append pages from new files
+      for (const file of files) {
+        const buffer = await file.arrayBuffer();
+        const srcPdf = await PDFDocument.load(buffer);
+        const copiedPages = await currentPdf.copyPages(srcPdf, srcPdf.getPageIndices());
+        copiedPages.forEach((page) => currentPdf.addPage(page));
+      }
+
+      // Save merged
+      const mergedBytes = await currentPdf.save();
+      const newBytes = new Uint8Array(mergedBytes);
+
+      // Parse new pages
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+      const buffer = newBytes.buffer.slice(newBytes.byteOffset, newBytes.byteOffset + newBytes.byteLength);
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+
+      // Get existing page count
+      const currentPages = useEditorStore.getState().pages;
+      const currentOrder = useEditorStore.getState().pageOrder;
+      const existingCount = currentPages.length;
+
+      // Create new page entries for inserted pages only
+      const newPages: PageData[] = [];
+      for (let i = existingCount; i < pdf.numPages; i++) {
+        const page = await pdf.getPage(i + 1);
+        const viewport = page.getViewport({ scale: 1 });
+
+        newPages.push({
+          id: `page-${i}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          pageIndex: i,
+          width: viewport.width,
+          height: viewport.height,
+          rotation: 0,
+          deleted: false,
+          thumbnailUrl: null,
+        });
+      }
+
+      // Update store
+      setPdfBytes(newBytes, useEditorStore.getState().fileName);
+      setPages([...currentPages, ...newPages]);
+      setPageOrder([...currentOrder, ...newPages.map((p) => p.id)]);
+
+      // Generate thumbnails for new pages
+      await generateThumbnails(newBytes, newPages);
+    } catch (err) {
+      console.error('Error inserting PDF:', err);
+    }
+  }, [pdfBytes]);
+
   // ---- Initialize Editor (from raw PDF bytes) ----
   async function initializeEditor(bytes: Uint8Array, fileName: string) {
     reset();
     setPdfBytes(bytes, fileName);
 
-    // Parse PDF to get page dimensions
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    // Convert to ArrayBuffer for pdfjs
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
     const pages: PageData[] = [];
 
     for (let i = 0; i < pdf.numPages; i++) {
@@ -135,12 +201,10 @@ export default function EditorPage() {
     setPageOrder(pages.map((p) => p.id));
     setProjectName(fileName.replace('.pdf', ''));
 
-    // Set first page as active
     if (pages.length > 0) {
       useEditorStore.getState().setActivePageId(pages[0].id);
     }
 
-    // Generate thumbnails in background
     await generateThumbnails(bytes, pages);
   }
 
@@ -149,26 +213,30 @@ export default function EditorPage() {
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
     for (const pageData of pages) {
-      const page = await pdf.getPage(pageData.pageIndex + 1);
-      const viewport = page.getViewport({ scale: 0.3 });
+      try {
+        const page = await pdf.getPage(pageData.pageIndex + 1);
+        const viewport = page.getViewport({ scale: 0.3 });
 
-      const canvas = document.createElement('canvas');
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext('2d')!;
-      await page.render({ canvas, canvasContext: ctx, viewport } as any).promise;
+        const canvas = document.createElement('canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d')!;
+        await page.render({ canvas, canvasContext: ctx, viewport } as any).promise;
 
-      const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
+        const thumbnailUrl = canvas.toDataURL('image/jpeg', 0.6);
 
-      // Update the page with thumbnail
-      useEditorStore.getState().setPages(
-        useEditorStore.getState().pages.map((p) =>
-          p.id === pageData.id ? { ...p, thumbnailUrl } : p
-        )
-      );
+        useEditorStore.getState().setPages(
+          useEditorStore.getState().pages.map((p) =>
+            p.id === pageData.id ? { ...p, thumbnailUrl } : p
+          )
+        );
+      } catch (err) {
+        console.error(`Thumbnail generation failed for page ${pageData.pageIndex}:`, err);
+      }
     }
   }
 
@@ -185,5 +253,5 @@ export default function EditorPage() {
   }
 
   // Show full editor
-  return <EditorShell />;
+  return <EditorShell onInsertPdf={handleInsertPdf} />;
 }

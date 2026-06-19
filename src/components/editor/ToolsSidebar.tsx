@@ -290,69 +290,94 @@ export default function ToolsSidebar() {
 
   return (
     <>
-      {/* ── Mobile toggle button (visible when sidebar is closed on small screens) ── */}
-      <button
-        onClick={toggle}
-        className={`
-          fixed right-3 top-20 z-50 lg:hidden
-          w-10 h-10 rounded-xl
-          bg-white/80 dark:bg-neutral-900/80 backdrop-blur-md
-          border border-neutral-200/50 dark:border-neutral-700/50
-          shadow-lg shadow-black/5
-          flex items-center justify-center
-          text-neutral-600 dark:text-neutral-400
-          hover:text-emerald-600 dark:hover:text-emerald-400
-          transition-all duration-200
-          ${isOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}
-        `}
-        aria-label="Open tools sidebar"
-      >
-        <PanelRightOpen className="w-4.5 h-4.5" />
-      </button>
+      {/* ── Mobile: Floating tool strip at bottom ── */}
+      <div className="lg:hidden fixed bottom-12 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-2xl bg-white/90 dark:bg-neutral-900/90 backdrop-blur-xl border border-neutral-200/50 dark:border-neutral-700/50 shadow-xl">
+        {TOOLS.map(({ type, icon: Icon, label }) => {
+          const isActive = activeTool === type;
+          return (
+            <button
+              key={type}
+              onClick={() => {
+                setActiveTool(type);
+                if (!isOpen) toggle();
+              }}
+              title={label}
+              className={`
+                relative w-9 h-9 rounded-xl flex items-center justify-center
+                transition-all duration-150 cursor-pointer
+                ${
+                  isActive
+                    ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                    : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60'
+                }
+              `}
+            >
+              <Icon className="w-4 h-4" />
+            </button>
+          );
+        })}
 
-      {/* ── Mobile backdrop ── */}
+        {/* Toggle panel button */}
+        <div className="w-px h-6 bg-neutral-200 dark:bg-neutral-700 mx-0.5" />
+        <button
+          onClick={toggle}
+          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+            isOpen
+              ? 'bg-emerald-500/15 text-emerald-600'
+              : 'text-neutral-500 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60'
+          }`}
+          title="Toggle tool options"
+        >
+          <PanelRightOpen className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* ── Mobile: Bottom sheet tool panel ── */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={toggle}
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
-          />
+          <>
+            {/* Backdrop (mobile only) */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={toggle}
+              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
+            />
+
+            {/* Bottom sheet (mobile) */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring' as const, stiffness: 350, damping: 32 }}
+              className="fixed bottom-0 left-0 right-0 z-50 lg:hidden max-h-[60vh] overflow-y-auto rounded-t-2xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-xl border-t border-neutral-200/50 dark:border-neutral-700/50 shadow-2xl p-4 pb-20"
+            >
+              <div className="w-10 h-1 rounded-full bg-neutral-300 dark:bg-neutral-700 mx-auto mb-4" />
+              {renderToolPanel()}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 
-      {/* ── Sidebar ── */}
+      {/* ── Desktop: Static right sidebar ── */}
       <AnimatePresence mode="wait">
         {isOpen && (
           <motion.aside
             initial={{ x: 300, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 300, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 350, damping: 32 }}
+            transition={{ type: 'spring' as const, stiffness: 350, damping: 32 }}
             className="
-              fixed right-0 top-0 bottom-0 z-50
-              lg:static lg:z-auto
+              hidden lg:flex
               w-[280px] shrink-0
-              flex flex-row
+              flex-row
               bg-white/70 dark:bg-[#09090b]/70 backdrop-blur-md
               border-l border-neutral-200/40 dark:border-neutral-800/50
-              shadow-2xl lg:shadow-none
             "
           >
             {/* ── Tool Panel Content ── */}
             <div className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 scrollbar-thin scrollbar-thumb-neutral-300 dark:scrollbar-thumb-neutral-700">
-              {/* Close button (mobile) */}
-              <button
-                onClick={toggle}
-                className="lg:hidden mb-3 w-8 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors"
-                aria-label="Close tools sidebar"
-              >
-                <PanelRightClose className="w-4 h-4" />
-              </button>
-
               <AnimatePresence mode="wait">
                 <div key={activeTool}>{renderToolPanel()}</div>
               </AnimatePresence>
@@ -381,7 +406,7 @@ export default function ToolsSidebar() {
                       <motion.div
                         layoutId="activeToolIndicator"
                         className="absolute inset-0 rounded-xl ring-1 ring-emerald-500/40"
-                        transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+                        transition={{ type: 'spring' as const, stiffness: 400, damping: 28 }}
                       />
                     )}
                     <Icon className="w-4 h-4 relative z-10" />
@@ -400,3 +425,4 @@ export default function ToolsSidebar() {
     </>
   );
 }
+

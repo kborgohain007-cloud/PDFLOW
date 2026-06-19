@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DndContext, closestCenter, type DragEndEvent, DragOverlay } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { RotateCw, RotateCcw, Copy, Trash2, MoreVertical, GripVertical } from 'lucide-react';
+import { RotateCw, RotateCcw, Copy, Trash2, MoreVertical, GripVertical, FilePlus2 } from 'lucide-react';
 import { useEditorStore } from '@/stores/editor-store';
 
 // ---- Sortable Page Thumbnail ----
@@ -151,9 +151,11 @@ function SortablePageThumbnail({
   );
 }
 
-// ---- Pages Sidebar ----
+interface PagesSidebarProps {
+  onInsertPdf?: (files: File[]) => void;
+}
 
-export default function PagesSidebar() {
+export default function PagesSidebar({ onInsertPdf }: PagesSidebarProps) {
   const pageOrder = useEditorStore((s) => s.pageOrder);
   const pages = useEditorStore((s) => s.pages);
   const activePageId = useEditorStore((s) => s.activePageId);
@@ -165,6 +167,7 @@ export default function PagesSidebar() {
   const isOpen = useEditorStore((s) => s.isPagesSidebarOpen);
 
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const insertInputRef = useRef<HTMLInputElement>(null);
 
   const visiblePages = useMemo(() => {
     return pageOrder
@@ -193,7 +196,7 @@ export default function PagesSidebar() {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="w-[180px] min-w-[180px] h-full overflow-y-auto border-r border-neutral-200/50 dark:border-neutral-800/80 bg-white/50 dark:bg-neutral-900/30 backdrop-blur-md p-3 flex flex-col gap-2"
+      className="hidden lg:flex w-[180px] min-w-[180px] h-full overflow-y-auto border-r border-neutral-200/50 dark:border-neutral-800/80 bg-white/50 dark:bg-neutral-900/30 backdrop-blur-md p-3 flex-col gap-2"
     >
       <div className="text-xs font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider px-1 mb-1">
         Pages ({visiblePages.length})
@@ -205,7 +208,7 @@ export default function PagesSidebar() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={pageOrder} strategy={verticalListSortingStrategy}>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 flex-1">
             {visiblePages.map((page) => (
               <SortablePageThumbnail
                 key={page.id}
@@ -223,6 +226,31 @@ export default function PagesSidebar() {
           </div>
         </SortableContext>
       </DndContext>
+
+      {/* Insert PDF Pages Button */}
+      {onInsertPdf && (
+        <>
+          <input
+            ref={insertInputRef}
+            type="file"
+            accept=".pdf,application/pdf"
+            multiple
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []);
+              if (files.length > 0) onInsertPdf(files);
+              e.target.value = '';
+            }}
+          />
+          <button
+            onClick={() => insertInputRef.current?.click()}
+            className="mt-2 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-700 hover:border-emerald-500 dark:hover:border-emerald-500 text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all text-xs font-semibold"
+          >
+            <FilePlus2 className="w-3.5 h-3.5" />
+            Insert Pages
+          </button>
+        </>
+      )}
     </motion.aside>
   );
 }

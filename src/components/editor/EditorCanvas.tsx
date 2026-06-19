@@ -18,8 +18,8 @@ let Rect: any = null;
 let Circle: any = null;
 let Line: any = null;
 let Arrow: any = null;
-let Text: any = null;
-let Image: any = null;
+let KText: any = null;
+let KImage: any = null;
 let Transformer: any = null;
 let Group: any = null;
 
@@ -27,7 +27,7 @@ let Group: any = null;
 
 interface PageCanvasProps {
   page: PageData;
-  pdfBytes: Uint8Array;
+  pdfDoc: any; // PDFDocumentProxy — loaded once, shared
   zoom: number;
   annotations: Annotation[];
   isActive: boolean;
@@ -38,7 +38,7 @@ interface PageCanvasProps {
 
 function PageCanvas({
   page,
-  pdfBytes,
+  pdfDoc,
   zoom,
   annotations,
   isActive,
@@ -48,7 +48,6 @@ function PageCanvas({
 }: PageCanvasProps) {
   const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const transformerRef = useRef<any>(null);
   const [pdfRendered, setPdfRendered] = useState(false);
   const [konvaLoaded, setKonvaLoaded] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -72,45 +71,56 @@ function PageCanvas({
   // Load Konva components dynamically
   useEffect(() => {
     async function loadKonva() {
-      const RK = await import('react-konva');
-      Stage = RK.Stage;
-      Layer = RK.Layer;
-      Rect = RK.Rect;
-      Circle = RK.Circle;
-      Line = RK.Line;
-      Arrow = RK.Arrow;
-      Text = RK.Text;
-      Image = RK.Image;
-      Transformer = RK.Transformer;
-      Group = RK.Group;
-      setKonvaLoaded(true);
+      try {
+        const RK = await import('react-konva');
+        Stage = RK.Stage;
+        Layer = RK.Layer;
+        Rect = RK.Rect;
+        Circle = RK.Circle;
+        Line = RK.Line;
+        Arrow = RK.Arrow;
+        KText = RK.Text;
+        KImage = RK.Image;
+        Transformer = RK.Transformer;
+        Group = RK.Group;
+        setKonvaLoaded(true);
+      } catch (err) {
+        console.error('Failed to load Konva:', err);
+      }
     }
     loadKonva();
   }, []);
 
-  // Render PDF page to canvas
+  // Render PDF page to canvas — uses shared pdfDoc (no re-parsing)
   useEffect(() => {
+    let cancelled = false;
+
     async function renderPdf() {
-      if (!pdfCanvasRef.current || !pdfBytes) return;
+      if (!pdfCanvasRef.current || !pdfDoc) return;
 
-      const pdfjsLib = await import('pdfjs-dist');
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+      try {
+        const pdfPage = await pdfDoc.getPage(page.pageIndex + 1);
+        const viewport = pdfPage.getViewport({ scale: zoom, rotation: page.rotation });
 
-      const pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-      const pdfPage = await pdf.getPage(page.pageIndex + 1);
-      const viewport = pdfPage.getViewport({ scale: zoom, rotation: page.rotation });
+        if (cancelled) return;
 
-      const canvas = pdfCanvasRef.current;
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
+        const canvas = pdfCanvasRef.current;
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
 
-      const ctx = canvas.getContext('2d')!;
-      await pdfPage.render({ canvas, canvasContext: ctx, viewport } as any).promise;
-      setPdfRendered(true);
+        const ctx = canvas.getContext('2d')!;
+        await pdfPage.render({ canvas, canvasContext: ctx, viewport } as any).promise;
+
+        if (!cancelled) setPdfRendered(true);
+      } catch (err) {
+        console.error(`Failed to render page ${page.pageIndex + 1}:`, err);
+      }
     }
 
+    setPdfRendered(false);
     renderPdf();
-  }, [pdfBytes, page.pageIndex, page.rotation, zoom]);
+    return () => { cancelled = true; };
+  }, [pdfDoc, page.pageIndex, page.rotation, zoom]);
 
   // Generate annotation ID
   const genId = () => `ann-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -194,10 +204,7 @@ function PageCanvas({
   );
 
   const handleStageMouseUp = useCallback(
-    (e: any) => {
-      const stage = e.target.getStage();
-      const pos = stage.getPointerPosition();
-
+    () => {
       if (activeTool === 'draw' && isDrawing && drawPoints.length >= 4) {
         const newDraw: DrawAnnotation = {
           id: genId(),
@@ -298,13 +305,12 @@ function PageCanvas({
   const renderAnnotation = useCallback(
     (ann: Annotation) => {
       if (!konvaLoaded) return null;
-      const isSelected = selectedAnnotationId === ann.id;
       const draggable = activeTool === 'select' && !ann.locked;
 
       switch (ann.type) {
         case 'text':
           return (
-            <Text
+            <KText
               key={ann.id}
               x={ann.x}
               y={ann.y}
@@ -321,9 +327,6 @@ function PageCanvas({
               onClick={() => handleAnnotationClick(ann)}
               onTap={() => handleAnnotationClick(ann)}
               onDragEnd={(e: any) => handleAnnotationDragEnd(ann, e)}
-              onDblClick={() => {
-                // TODO: Inline text editing in Phase 2
-              }}
             />
           );
 
@@ -397,8 +400,6 @@ function PageCanvas({
                   {...shapeProps}
                   x={ann.x + ann.width / 2}
                   y={ann.y + ann.height / 2}
-                  radiusX={ann.width / 2}
-                  radiusY={ann.height / 2}
                   radius={Math.min(ann.width, ann.height) / 2}
                 />
               );
@@ -442,7 +443,7 @@ function PageCanvas({
           return null;
       }
     },
-    [konvaLoaded, selectedAnnotationId, activeTool, handleAnnotationClick, handleAnnotationDragEnd],
+    [konvaLoaded, activeTool, handleAnnotationClick, handleAnnotationDragEnd],
   );
 
   // Cursor style based on active tool
@@ -537,6 +538,13 @@ function PageCanvas({
           </Stage>
         </div>
       )}
+
+      {/* Loading overlay */}
+      {!pdfRendered && (
+        <div className="absolute inset-0 flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
+          <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )}
     </div>
   );
 }
@@ -556,6 +564,45 @@ export default function EditorCanvas() {
   const setZoom = useEditorStore((s) => s.setZoom);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  // ---- Load PDF document ONCE when pdfBytes changes ----
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPdf() {
+      if (!pdfBytes) {
+        setPdfDoc(null);
+        return;
+      }
+
+      try {
+        setLoadError(null);
+        const pdfjsLib = await import('pdfjs-dist');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+        // Convert Uint8Array to ArrayBuffer copy (required by pdfjs-dist)
+        const buffer = pdfBytes.buffer.slice(
+          pdfBytes.byteOffset,
+          pdfBytes.byteOffset + pdfBytes.byteLength
+        );
+
+        const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+        if (!cancelled) {
+          setPdfDoc(doc);
+        }
+      } catch (err) {
+        console.error('Failed to load PDF document:', err);
+        if (!cancelled) {
+          setLoadError('Failed to load PDF. The file may be corrupted or password-protected.');
+        }
+      }
+    }
+
+    loadPdf();
+    return () => { cancelled = true; };
+  }, [pdfBytes]);
 
   // Ctrl+scroll to zoom
   useEffect(() => {
@@ -581,10 +628,24 @@ export default function EditorCanvas() {
       .filter((p): p is PageData => !!p && !p.deleted);
   }, [pageOrder, pages]);
 
-  if (!pdfBytes || visiblePages.length === 0) {
+  if (loadError) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-red-500 dark:text-red-400 p-8">
+        <div className="text-center">
+          <p className="text-sm font-semibold mb-2">⚠️ PDF Load Error</p>
+          <p className="text-xs text-neutral-500">{loadError}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!pdfDoc || visiblePages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-neutral-400 dark:text-neutral-600">
-        <p className="text-sm">No pages to display</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm">Loading PDF...</p>
+        </div>
       </div>
     );
   }
@@ -594,12 +655,12 @@ export default function EditorCanvas() {
       ref={scrollContainerRef}
       className="flex-1 overflow-auto bg-neutral-200/50 dark:bg-neutral-950/50 py-8"
     >
-      <div className="flex flex-col items-center gap-2 px-4">
+      <div className="flex flex-col items-center gap-2 px-4 pb-16">
         {visiblePages.map((page) => (
           <PageCanvas
             key={page.id}
             page={page}
-            pdfBytes={pdfBytes}
+            pdfDoc={pdfDoc}
             zoom={zoom}
             annotations={annotations[page.id] || []}
             isActive={activePageId === page.id}

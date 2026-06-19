@@ -11,8 +11,13 @@ import ToolsSidebar from './ToolsSidebar';
 import FloatingToolbar from './FloatingToolbar';
 import ZoomControls from './ZoomControls';
 import ExportPanel from './panels/ExportPanel';
+import type { PageData } from '@/types/editor';
 
-export default function EditorShell() {
+interface EditorShellProps {
+  onInsertPdf?: (files: File[]) => void;
+}
+
+export default function EditorShell({ onInsertPdf }: EditorShellProps) {
   const pdfBytes = useEditorStore((s) => s.pdfBytes);
   const isDirty = useEditorStore((s) => s.isDirty);
   const projectId = useEditorStore((s) => s.projectId);
@@ -25,23 +30,21 @@ export default function EditorShell() {
   const setProjectId = useEditorStore((s) => s.setProjectId);
   const setAutoSaving = useEditorStore((s) => s.setAutoSaving);
   const isExportPanelOpen = useEditorStore((s) => s.isExportPanelOpen);
+  const toggleExportPanel = useEditorStore((s) => s.toggleExportPanel);
 
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // ---- Keyboard Shortcuts ----
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Undo: Ctrl+Z
       if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         useEditorStore.temporal.getState().undo();
       }
-      // Redo: Ctrl+Shift+Z or Ctrl+Y
       if ((e.ctrlKey || e.metaKey) && (e.key === 'Z' || e.key === 'y') && (e.shiftKey || e.key === 'y')) {
         e.preventDefault();
         useEditorStore.temporal.getState().redo();
       }
-      // Save: Ctrl+S
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
@@ -93,28 +96,43 @@ export default function EditorShell() {
     [pdfBytes, projectName, fileName, annotations, pageOrder, pages, projectId, markSaved, setProjectId, setAutoSaving],
   );
 
+  // ---- Quick Download (current PDF as-is) ----
+  const handleDownload = useCallback(() => {
+    if (!pdfBytes) return;
+    const blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName || 'document.pdf';
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [pdfBytes, fileName]);
+
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-white dark:bg-neutral-950">
       {/* Top Navbar */}
-      <EditorNavbar onSave={() => handleSave(false)} />
+      <EditorNavbar
+        onSave={() => handleSave(false)}
+        onExport={toggleExportPanel}
+        onDownload={handleDownload}
+        onInsertPdf={onInsertPdf}
+      />
 
       {/* Main Content: Sidebar + Canvas + Tools */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: Pages Sidebar */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Left: Pages Sidebar — hidden on mobile */}
         <AnimatePresence>
-          <PagesSidebar />
+          <PagesSidebar onInsertPdf={onInsertPdf} />
         </AnimatePresence>
 
         {/* Center: PDF Canvas */}
         <EditorCanvas />
 
         {/* Right: Tools Sidebar */}
-        <AnimatePresence>
-          <ToolsSidebar />
-        </AnimatePresence>
+        <ToolsSidebar />
       </div>
 
-      {/* Bottom: Zoom Controls */}
+      {/* Bottom: Zoom Controls — inside layout flow */}
       <ZoomControls />
 
       {/* Floating Toolbar */}

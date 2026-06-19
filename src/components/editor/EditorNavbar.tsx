@@ -13,6 +13,7 @@ import {
   PanelRight,
   Loader2,
   Check,
+  FilePlus2,
 } from 'lucide-react';
 import Logo from '@/components/ui/Logo';
 import { useEditorStore } from '@/stores/editor-store';
@@ -22,6 +23,7 @@ interface EditorNavbarProps {
   onSave?: () => void;
   onExport?: () => void;
   onDownload?: () => void;
+  onInsertPdf?: (files: File[]) => void;
 }
 
 // ---- Helpers ----
@@ -41,7 +43,10 @@ export default function EditorNavbar({
   onSave,
   onExport,
   onDownload,
+  onInsertPdf,
 }: EditorNavbarProps) {
+  // Hidden file input ref for Insert PDF
+  const insertInputRef = useRef<HTMLInputElement>(null);
   // Editor store state
   const projectName = useEditorStore((s) => s.projectName);
   const setProjectName = useEditorStore((s) => s.setProjectName);
@@ -251,6 +256,32 @@ export default function EditorNavbar({
           <Save className="w-4 h-4" />
           <span className="hidden sm:inline">Save</span>
         </button>
+
+        {/* Insert PDF button */}
+        {onInsertPdf && (
+          <>
+            <input
+              ref={insertInputRef}
+              type="file"
+              accept=".pdf,application/pdf"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                const files = Array.from(e.target.files || []);
+                if (files.length > 0) onInsertPdf(files);
+                e.target.value = '';
+              }}
+            />
+            <button
+              onClick={() => insertInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-neutral-300 hover:text-white hover:bg-white/10 active:scale-95 transition-all"
+              title="Insert PDF Pages"
+            >
+              <FilePlus2 className="w-4 h-4" />
+              <span className="hidden sm:inline">Insert</span>
+            </button>
+          </>
+        )}
 
         {/* Export button */}
         <button
