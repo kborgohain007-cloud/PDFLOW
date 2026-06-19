@@ -16,6 +16,7 @@ export default function EditorPage() {
   const setPdfBytes = useEditorStore((s) => s.setPdfBytes);
   const setPages = useEditorStore((s) => s.setPages);
   const setPageOrder = useEditorStore((s) => s.setPageOrder);
+  const insertPages = useEditorStore((s) => s.insertPages);
   const setProjectId = useEditorStore((s) => s.setProjectId);
   const setProjectName = useEditorStore((s) => s.setProjectName);
   const setAnnotations = useEditorStore((s) => s.setAnnotations);
@@ -112,7 +113,7 @@ export default function EditorPage() {
       const { PDFDocument } = await import('pdf-lib');
 
       // Load current document
-      const currentPdf = await PDFDocument.load(pdfBytes.slice());
+      const currentPdf = await PDFDocument.load(pdfBytes.slice().buffer as ArrayBuffer);
 
       // Append pages from new files
       for (const file of files) {
@@ -129,7 +130,8 @@ export default function EditorPage() {
       // Parse new pages
       const pdfjsLib = await import('pdfjs-dist');
       pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-      const pdf = await pdfjsLib.getDocument({ data: newBytes.slice() }).promise;
+      const buffer = newBytes.slice().buffer as ArrayBuffer;
+      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
       // Get existing page count
       const currentPages = useEditorStore.getState().pages;
@@ -154,9 +156,7 @@ export default function EditorPage() {
       }
 
       // Update store
-      setPdfBytes(newBytes, useEditorStore.getState().fileName);
-      setPages([...currentPages, ...newPages]);
-      setPageOrder([...currentOrder, ...newPages.map((p) => p.id)]);
+      insertPages(newBytes, newPages);
 
       // Generate thumbnails for new pages
       await generateThumbnails(newBytes, newPages);
@@ -173,8 +173,9 @@ export default function EditorPage() {
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    // Convert to ArrayBuffer/Uint8Array copy for pdfjs
-    const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+    // Convert to ArrayBuffer copy for pdfjs
+    const buffer = bytes.slice().buffer as ArrayBuffer;
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
     const pages: PageData[] = [];
 
     for (let i = 0; i < pdf.numPages; i++) {
@@ -208,7 +209,8 @@ export default function EditorPage() {
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+    const buffer = bytes.slice().buffer as ArrayBuffer;
+    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
 
     for (const pageData of pages) {
       try {

@@ -81,6 +81,7 @@ interface EditorState extends TrackedState {
   // Pages
   setPages: (pages: PageData[]) => void;
   setPageOrder: (order: string[]) => void;
+  insertPages: (newBytes: Uint8Array, newPages: PageData[]) => void;
   rotatePage: (pageId: string, degrees: 90 | -90 | 180) => void;
   deletePage: (pageId: string) => void;
   duplicatePage: (pageId: string) => void;
@@ -178,6 +179,13 @@ export const useEditorStore = create<EditorState>()(
       setPages: (pages) => set({ pages, isDirty: true }),
 
       setPageOrder: (pageOrder) => set({ pageOrder, isDirty: true }),
+
+      insertPages: (newBytes, newPages) => set((state) => ({
+        pdfBytes: newBytes,
+        pages: [...state.pages, ...newPages],
+        pageOrder: [...state.pageOrder, ...newPages.map((p) => p.id)],
+        isDirty: true,
+      })),
 
       rotatePage: (pageId, degrees) => set((state) => ({
         pages: state.pages.map((p) =>
