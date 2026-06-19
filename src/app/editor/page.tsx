@@ -112,10 +112,7 @@ export default function EditorPage() {
       const { PDFDocument } = await import('pdf-lib');
 
       // Load current document
-      const currentPdf = await PDFDocument.load(pdfBytes.buffer.slice(
-        pdfBytes.byteOffset,
-        pdfBytes.byteOffset + pdfBytes.byteLength,
-      ));
+      const currentPdf = await PDFDocument.load(pdfBytes.slice());
 
       // Append pages from new files
       for (const file of files) {
@@ -132,8 +129,7 @@ export default function EditorPage() {
       // Parse new pages
       const pdfjsLib = await import('pdfjs-dist');
       pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
-      const buffer = newBytes.buffer.slice(newBytes.byteOffset, newBytes.byteOffset + newBytes.byteLength);
-      const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+      const pdf = await pdfjsLib.getDocument({ data: newBytes.slice() }).promise;
 
       // Get existing page count
       const currentPages = useEditorStore.getState().pages;
@@ -177,9 +173,8 @@ export default function EditorPage() {
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    // Convert to ArrayBuffer for pdfjs
-    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+    // Convert to ArrayBuffer/Uint8Array copy for pdfjs
+    const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
     const pages: PageData[] = [];
 
     for (let i = 0; i < pdf.numPages; i++) {
@@ -213,8 +208,7 @@ export default function EditorPage() {
     const pdfjsLib = await import('pdfjs-dist');
     pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-    const buffer = bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength);
-    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
 
     for (const pageData of pages) {
       try {

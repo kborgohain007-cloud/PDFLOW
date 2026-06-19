@@ -582,13 +582,8 @@ export default function EditorCanvas() {
         const pdfjsLib = await import('pdfjs-dist');
         pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
-        // Convert Uint8Array to ArrayBuffer copy (required by pdfjs-dist)
-        const buffer = pdfBytes.buffer.slice(
-          pdfBytes.byteOffset,
-          pdfBytes.byteOffset + pdfBytes.byteLength
-        );
-
-        const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+        // Convert Uint8Array copy (required by pdfjs-dist)
+        const doc = await pdfjsLib.getDocument({ data: pdfBytes.slice() }).promise;
         if (!cancelled) {
           setPdfDoc(doc);
         }
